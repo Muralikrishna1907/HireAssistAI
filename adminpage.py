@@ -673,7 +673,6 @@ def manage_users():
 #         return redirect(url_for("login"))
 
 #     return render_template("admin_home.html")
-
 # DEFAULT MENU
 DEFAULT_MENU = [
 
