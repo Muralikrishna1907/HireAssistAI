@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Interview - Guidelines</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Exact Frosted Blue Glass Effect */
+        .deep-blue-glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<!-- Changed to h-screen and overflow-hidden to lock scrolling -->
+
+<body
+    class="bg-[linear-gradient(135deg,#172554,#1e3a8a,#2563eb)] h-screen flex flex-col font-sans antialiased text-white overflow-hidden selection:bg-blue-400 relative">
+
+    <!-- SBP Logo Watermark -->
+    <div class="fixed inset-0 flex items-center justify-center pointer-events-none z-0">
+        <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="Watermark"
+            class="w-[80vw] md:w-[50vw] max-w-[800px] opacity-[0.04] object-contain select-none">
+    </div>
+
+    <!-- Transparent Header -->
+    <header class="h-16 flex items-center justify-between px-6 sm:px-10 w-full z-20 pt-4 flex-shrink-0">
+        <div class="flex items-center">
+            <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="SBP Logo"
+                class="h-10 w-auto drop-shadow-md">
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col items-center justify-center px-4 z-10 w-full max-w-4xl mx-auto h-full max-h-full">
+
+        <div class="text-center mb-5 mt-2">
+            <h1 class="text-3xl md:text-4xl font-black tracking-tight mb-1.5 drop-shadow-lg text-white">Online
+                Assessment</h1>
+            <p class="text-white/90 text-sm font-semibold drop-shadow-sm">Please read the instructions carefully before
+                proceeding.</p>
+        </div>
+
+        <!-- Frosted Blue Glass Card - Reduced padding/margins to fit screen -->
+        <div class="deep-blue-glass w-full p-6 md:p-8 rounded-2xl mb-6 relative overflow-hidden">
+
+            <h3
+                class="text-lg font-extrabold mb-4 flex items-center border-b border-white/20 pb-3 drop-shadow-md text-white">
+                <i class="fa-solid fa-clipboard-list mr-3 text-white/90"></i> Assessment Guidelines
+            </h3>
+
+            <!-- Tightened line height and spacing -->
+            <ul class="space-y-3 text-white/90 text-[14px] leading-snug mb-5 font-medium">
+                <li class="flex items-start">
+                    <i class="fa-solid fa-video text-blue-300 mt-0.5 mr-3 w-5 text-center drop-shadow-sm"></i>
+                    <span>Camera access must remain enabled throughout the assessment.</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa-regular fa-clock text-blue-300 mt-0.5 mr-3 w-5 text-center drop-shadow-sm"></i>
+                    <span>The test duration is strictly timed.</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa-solid fa-desktop text-blue-300 mt-0.5 mr-3 w-5 text-center drop-shadow-sm"></i>
+                    <span>Switching tabs, minimizing the browser, or using external devices is prohibited.</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa-solid fa-shield-halved text-blue-300 mt-0.5 mr-3 w-5 text-center drop-shadow-sm"></i>
+                    <span>Any suspicious activity will be recorded. Three (3) violations will result in automatic
+                        termination.</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa-solid fa-wifi text-blue-300 mt-0.5 mr-3 w-5 text-center drop-shadow-sm"></i>
+                    <span>Ensure a stable internet connection and a quiet environment.</span>
+                </li>
+            </ul>
+
+            <!-- Info Box inside the card -->
+            <div
+                class="bg-black/25 rounded-xl p-3.5 border border-white/10 flex items-start text-sm text-white/90 mt-5 backdrop-blur-sm shadow-inner">
+                <i class="fa-solid fa-circle-info mt-0.5 mr-3 text-blue-300"></i>
+                <p class="font-medium text-xs md:text-sm">By proceeding, you consent to monitoring for identity
+                    verification and assessment integrity purposes.</p>
+            </div>
+        </div>
+
+        <form id="examForm" class="w-full flex flex-col items-center">
+            <!-- Checkbox -->
+            <label class="flex items-center cursor-pointer mb-5 group">
+                <div class="relative flex items-center justify-center w-5 h-5 md:w-6 md:h-6">
+                    <input type="checkbox" id="agreementCheckbox" class="peer sr-only">
+                    <div
+                        class="absolute inset-0 bg-black/25 border-2 border-white/50 rounded transition-all peer-checked:bg-white peer-checked:border-white group-hover:border-white/80">
+                    </div>
+                    <i
+                        class="fa-solid fa-check text-blue-900 text-[10px] md:text-sm opacity-0 peer-checked:opacity-100 transform scale-50 peer-checked:scale-100 transition-all duration-200 z-10 font-bold"></i>
+                </div>
+                <span
+                    class="ml-3 font-bold text-base md:text-lg text-white/90 drop-shadow-md tracking-wide group-hover:text-white transition-colors">I
+                    have read and agree to the guidelines.</span>
+            </label>
+
+            <!-- Proceed Button -->
+            <button type="submit" id="startButton" disabled
+                class="bg-white hover:bg-gray-100 text-blue-950 font-extrabold py-3 px-8 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none text-sm md:text-base flex items-center tracking-wide">
+                <span>Proceed to Assessment</span>
+                <i class="fa-solid fa-arrow-right ml-2 transition-transform" id="btnIcon"></i>
+            </button>
+        </form>
+    </main>
+
+    <script>
+        const checkbox = document.getElementById("agreementCheckbox");
+        const button = document.getElementById("startButton");
+        const btnIcon = document.getElementById("btnIcon");
+
+        checkbox.addEventListener("change", function () {
+            button.disabled = !this.checked;
+        });
+
+        document.getElementById("examForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            if (!checkbox.checked) return;
+
+            btnIcon.className = "fa-solid fa-spinner fa-spin ml-2";
+            button.disabled = true;
+
+            fetch("/capture_photo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({})
+            })
+                .then(res => res.json())
+                .then(data => {
+                    window.location.href = "/verify";
+                })
+                .catch(() => {
+                    btnIcon.className = "fa-solid fa-arrow-right ml-2";
+                    button.disabled = false;
+                });
+        });
+    </script>
+</body>
+
+</html>

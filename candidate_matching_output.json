@@ -1,0 +1,231 @@
+[
+    {
+        "name": "Rajesh Kumar",
+        "job_title": "SAP CAPM Developer",
+        "candidate_profile": "Backend and Cloud developer specialized in SAP ecosystem",
+        "skills": [
+            "SAP BTP",
+            "SAP CAP",
+            "Node.js",
+            "JavaScript",
+            "CDS",
+            "OData V4",
+            "SAP Fiori",
+            "SAP HANA Cloud"
+        ],
+        "total_experience": "6",
+        "resume_headline": "Senior SAP CAPM Developer with 6 years of experience",
+        "summary": "Expert in building scalable SAP CAP services and deploying on Cloud Foundry.",
+        "ug_degree": "B.Tech Computer Science",
+        "pg_degree": "",
+        "doctorate_degree": "",
+        "phone": "9876543210",
+        "location": "Hyderabad",
+        "company": "TechCorp India",
+        "designation": "Senior Developer",
+        "ctc": "15",
+        "notice_period": "30 Days",
+        "expected_ctc": "18",
+        "current_ctc": "15",
+        "notice_period_answer": "30 Days",
+        "education": [
+            {
+                "degree": "B.Tech Computer Science"
+            }
+        ],
+        "raw_text": "Candidate Name: Rajesh Kumar\n\nResume Headline:\nSenior SAP CAPM Developer with 6 years of experience\n\nProfessional Summary:\nExpert in building scalable SAP CAP services and deploying on Cloud Foundry.\n\nJob Title:\nSAP CAPM Developer\n\nCandidate Profile:\nBackend and Cloud developer specialized in SAP ecosystem\n\nPhone:\n9876543210\n\nLocation:\nHyderabad\n\nCurrent Company:\nTechCorp India\n\nDesignation:\nSenior Developer\n\nTechnical Skills:\nSAP BTP, SAP CAP, Node.js, JavaScript, CDS, OData V4, SAP Fiori, SAP HANA Cloud\n\nTotal Experience:\n6 Years\n\nCurrent CTC:\n15\n\nExpected CTC:\n18\n\nNotice Period:\n30 Days\n\nEducation:\n\n\nDegree: B.Tech Computer Science",
+        "match_score": 60.17,
+        "rank": 1
+    },
+    {
+        "name": "Amit Patel",
+        "job_title": "SAP UI5/Fiori Developer",
+        "candidate_profile": "Frontend focused SAP developer",
+        "skills": [
+            "SAPUI5",
+            "SAP Fiori",
+            "JavaScript",
+            "OData",
+            "REST APIs",
+            "Git"
+        ],
+        "total_experience": "4",
+        "resume_headline": "SAP UI5 Developer with 4 years building enterprise apps",
+        "summary": "Proficient in SAP Fiori and UI5. Have consumed OData APIs but less experience building them via CAP.",
+        "ug_degree": "B.Tech ECE",
+        "pg_degree": "",
+        "doctorate_degree": "",
+        "phone": "9876543212",
+        "location": "Pune",
+        "company": "Global Tech Services",
+        "designation": "Software Engineer",
+        "ctc": "10",
+        "notice_period": "60 Days",
+        "expected_ctc": "14",
+        "current_ctc": "10",
+        "notice_period_answer": "60 Days",
+        "education": [
+            {
+                "degree": "B.Tech ECE"
+            }
+        ],
+        "raw_text": "Candidate Name: Amit Patel\n\nResume Headline:\nSAP UI5 Developer with 4 years building enterprise apps\n\nProfessional Summary:\nProficient in SAP Fiori and UI5. Have consumed OData APIs but less experience building them via CAP.\n\nJob Title:\nSAP UI5/Fiori Developer\n\nCandidate Profile:\nFrontend focused SAP developer\n\nPhone:\n9876543212\n\nLocation:\nPune\n\nCurrent Company:\nGlobal Tech Services\n\nDesignation:\nSoftware Engineer\n\nTechnical Skills:\nSAPUI5, SAP Fiori, JavaScript, OData, REST APIs, Git\n\nTotal Experience:\n4 Years\n\nCurrent CTC:\n10\n\nExpected CTC:\n14\n\nNotice Period:\n60 Days\n\nEducation:\n\n\nDegree: B.Tech ECE",
+        "match_score": 57.74,
+        "rank": 2
+    },
+    {
+        "name": "Priya Sharma",
+        "job_title": "Senior SAP BTP Consultant",
+        "candidate_profile": "SAP BTP and Node.js expert",
+        "skills": [
+            "SAP BTP",
+            "SAP CAP",
+            "Node.js",
+            "Cloud Foundry",
+            "REST APIs",
+            "Git",
+            "CI/CD",
+            "HDI Containers"
+        ],
+        "total_experience": "7",
+        "resume_headline": "Lead SAP BTP Developer with strong Node.js background",
+        "summary": "Extensive experience in SAP HANA Cloud, OData integration and CI/CD pipelines.",
+        "ug_degree": "B.E. IT",
+        "pg_degree": "M.Tech Software Engineering",
+        "doctorate_degree": "",
+        "phone": "9876543211",
+        "location": "Bangalore",
+        "company": "Innovate SAP Solutions",
+        "designation": "Lead Consultant",
+        "ctc": "20",
+        "notice_period": "15 Days",
+        "expected_ctc": "25",
+        "current_ctc": "20",
+        "notice_period_answer": "15 Days",
+        "education": [
+            {
+                "degree": "B.E. IT"
+            },
+            {
+                "degree": "M.Tech Software Engineering"
+            }
+        ],
+        "raw_text": "Candidate Name: Priya Sharma\n\nResume Headline:\nLead SAP BTP Developer with strong Node.js background\n\nProfessional Summary:\nExtensive experience in SAP HANA Cloud, OData integration and CI/CD pipelines.\n\nJob Title:\nSenior SAP BTP Consultant\n\nCandidate Profile:\nSAP BTP and Node.js expert\n\nPhone:\n9876543211\n\nLocation:\nBangalore\n\nCurrent Company:\nInnovate SAP Solutions\n\nDesignation:\nLead Consultant\n\nTechnical Skills:\nSAP BTP, SAP CAP, Node.js, Cloud Foundry, REST APIs, Git, CI/CD, HDI Containers\n\nTotal Experience:\n7 Years\n\nCurrent CTC:\n20\n\nExpected CTC:\n25\n\nNotice Period:\n15 Days\n\nEducation:\n\n\nDegree: B.E. IT\n\n\nDegree: M.Tech Software Engineering",
+        "match_score": 54.57,
+        "rank": 3
+    },
+    {
+        "name": "Neha Gupta",
+        "job_title": "Backend Node.js Developer",
+        "candidate_profile": "Backend developer transitioning to enterprise tech",
+        "skills": [
+            "Node.js",
+            "JavaScript",
+            "REST APIs",
+            "Git",
+            "Cloud Foundry",
+            "MongoDB",
+            "Express"
+        ],
+        "total_experience": "5",
+        "resume_headline": "Node.js developer with cloud deployment experience",
+        "summary": "Strong backend skills using Node.js and REST APIs. Familiar with Cloud Foundry but new to SAP CAP specific libraries.",
+        "ug_degree": "B.Sc Computer Science",
+        "pg_degree": "MCA",
+        "doctorate_degree": "",
+        "phone": "9876543213",
+        "location": "Hyderabad",
+        "company": "WebDev Studios",
+        "designation": "Backend Developer",
+        "ctc": "12",
+        "notice_period": "Immediate",
+        "expected_ctc": "15",
+        "current_ctc": "12",
+        "notice_period_answer": "Immediate",
+        "education": [
+            {
+                "degree": "B.Sc Computer Science"
+            },
+            {
+                "degree": "MCA"
+            }
+        ],
+        "raw_text": "Candidate Name: Neha Gupta\n\nResume Headline:\nNode.js developer with cloud deployment experience\n\nProfessional Summary:\nStrong backend skills using Node.js and REST APIs. Familiar with Cloud Foundry but new to SAP CAP specific libraries.\n\nJob Title:\nBackend Node.js Developer\n\nCandidate Profile:\nBackend developer transitioning to enterprise tech\n\nPhone:\n9876543213\n\nLocation:\nHyderabad\n\nCurrent Company:\nWebDev Studios\n\nDesignation:\nBackend Developer\n\nTechnical Skills:\nNode.js, JavaScript, REST APIs, Git, Cloud Foundry, MongoDB, Express\n\nTotal Experience:\n5 Years\n\nCurrent CTC:\n12\n\nExpected CTC:\n15\n\nNotice Period:\nImmediate\n\nEducation:\n\n\nDegree: B.Sc Computer Science\n\n\nDegree: MCA",
+        "match_score": 53.71,
+        "rank": 4
+    },
+    {
+        "name": "Vikram Singh",
+        "job_title": "Java Developer",
+        "candidate_profile": "Enterprise Java backend developer",
+        "skills": [
+            "Java",
+            "Spring Boot",
+            "Hibernate",
+            "MySQL",
+            "HTML",
+            "CSS"
+        ],
+        "total_experience": "3",
+        "resume_headline": "Java Spring Boot developer with 3 years experience",
+        "summary": "Worked primarily on legacy Java systems and MySQL databases. Looking for Java roles.",
+        "ug_degree": "B.Tech IT",
+        "pg_degree": "",
+        "doctorate_degree": "",
+        "phone": "9876543214",
+        "location": "Chennai",
+        "company": "Legacy Systems Inc",
+        "designation": "Java Associate",
+        "ctc": "8",
+        "notice_period": "90 Days",
+        "expected_ctc": "12",
+        "current_ctc": "8",
+        "notice_period_answer": "90 Days",
+        "education": [
+            {
+                "degree": "B.Tech IT"
+            }
+        ],
+        "raw_text": "Candidate Name: Vikram Singh\n\nResume Headline:\nJava Spring Boot developer with 3 years experience\n\nProfessional Summary:\nWorked primarily on legacy Java systems and MySQL databases. Looking for Java roles.\n\nJob Title:\nJava Developer\n\nCandidate Profile:\nEnterprise Java backend developer\n\nPhone:\n9876543214\n\nLocation:\nChennai\n\nCurrent Company:\nLegacy Systems Inc\n\nDesignation:\nJava Associate\n\nTechnical Skills:\nJava, Spring Boot, Hibernate, MySQL, HTML, CSS\n\nTotal Experience:\n3 Years\n\nCurrent CTC:\n8\n\nExpected CTC:\n12\n\nNotice Period:\n90 Days\n\nEducation:\n\n\nDegree: B.Tech IT",
+        "match_score": 44.66,
+        "rank": 5
+    },
+    {
+        "name": "Sneha Reddy",
+        "job_title": "HR Executive",
+        "candidate_profile": "Human resources and talent acquisition",
+        "skills": [
+            "Talent Acquisition",
+            "Onboarding",
+            "Payroll",
+            "Microsoft Excel",
+            "Sourcing"
+        ],
+        "total_experience": "5",
+        "resume_headline": "HR Professional with 5 years in IT recruitment",
+        "summary": "Skilled in sourcing candidates and managing employee lifecycle. No programming experience.",
+        "ug_degree": "B.Com",
+        "pg_degree": "MBA HR",
+        "doctorate_degree": "",
+        "phone": "9876543215",
+        "location": "Hyderabad",
+        "company": "PeopleFirst Corp",
+        "designation": "HR Executive",
+        "ctc": "6",
+        "notice_period": "30 Days",
+        "expected_ctc": "8",
+        "current_ctc": "6",
+        "notice_period_answer": "30 Days",
+        "education": [
+            {
+                "degree": "B.Com"
+            },
+            {
+                "degree": "MBA HR"
+            }
+        ],
+        "raw_text": "Candidate Name: Sneha Reddy\n\nResume Headline:\nHR Professional with 5 years in IT recruitment\n\nProfessional Summary:\nSkilled in sourcing candidates and managing employee lifecycle. No programming experience.\n\nJob Title:\nHR Executive\n\nCandidate Profile:\nHuman resources and talent acquisition\n\nPhone:\n9876543215\n\nLocation:\nHyderabad\n\nCurrent Company:\nPeopleFirst Corp\n\nDesignation:\nHR Executive\n\nTechnical Skills:\nTalent Acquisition, Onboarding, Payroll, Microsoft Excel, Sourcing\n\nTotal Experience:\n5 Years\n\nCurrent CTC:\n6\n\nExpected CTC:\n8\n\nNotice Period:\n30 Days\n\nEducation:\n\n\nDegree: B.Com\n\n\nDegree: MBA HR",
+        "match_score": 41.55,
+        "rank": 6
+    }
+]

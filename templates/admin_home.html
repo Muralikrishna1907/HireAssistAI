@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hire Assist AI - Overview</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .sidebar-text {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .sidebar-collapsed .sidebar-text {
+            opacity: 0;
+            display: none;
+        }
+
+        .sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar-collapsed .nav-icon {
+            margin-right: 0;
+        }
+
+        /* GUARANTEED VISIBLE WATERMARK CSS */
+        /* GUARANTEED VISIBLE WATERMARK CSS */
+        .logo-watermark {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200vw;
+            height: 200vh;
+            pointer-events: none;
+            z-index: 0;
+            background-image: url("{{ url_for('static', filename='images/SBP-Logo.png') }}");
+            background-repeat: repeat;
+            background-size: 300px auto;
+            transform: rotate(-25deg);
+            opacity: 0.3;
+
+            /* Changed from grayscale to a sky blue tint */
+            filter: brightness(0) invert(1) sepia(100%) hue-rotate(90deg) saturate(400%) brightness(0.9);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 flex h-screen font-sans antialiased text-slate-800 overflow-hidden selection:bg-blue-200">
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+        class="w-64 bg-[#0B1121] text-slate-300 flex flex-col shadow-2xl z-20 flex-shrink-0 transition-all duration-300 ease-in-out">
+
+        <div class="h-20 flex items-center px-5 border-b border-white/10 overflow-hidden">
+            <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="SBP Logo" id="sidebar-logo"
+                class="h-11 w-auto object-contain flex-shrink-0 mr-3 grayscale brightness-200 transition-all duration-300">
+            <span class="sidebar-text text-white font-bold text-lg tracking-wide whitespace-nowrap">Hire Assist
+                AI</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-6 px-3 space-y-8 custom-scrollbar overflow-x-hidden">
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 whitespace-nowrap">
+                    Main Menu</p>
+                <nav class="space-y-1">
+                    <!-- <a href="{{ url_for('admin_home') }}"
+                        class="nav-item flex items-center px-3 py-3 bg-blue-600/10 text-blue-400 rounded-xl border-l-4 border-blue-500 transition-colors">
+                        <i class="fa-solid fa-house w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Overview</span>
+                    </a> -->
+                    <a href="{{ url_for('dashboard') }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-chart-line w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('manage_users') }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-users w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Manage Users</span>
+                    </a>
+                    <a href="{{ url_for('reports') }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-file-invoice w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Reports</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 whitespace-nowrap">
+                    Job Management</p>
+                <nav class="space-y-1">
+                    <a href="{{ url_for('excel_upload') }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-list-check w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Smart Shortlisting</span>
+                    </a>
+                    <a href="{{ url_for('create_job') }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-square-plus w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Create Job</span>
+                    </a>
+                    <a href="{{ url_for('job_descriptions') }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-list w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">View All Jobs</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+        <!-- Top Header -->
+        <header
+            class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 sm:px-8 z-20 flex-shrink-0 shadow-sm relative">
+            <div class="flex items-center">
+                <button onclick="toggleSidebar()"
+                    class="mr-5 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-xl font-black text-slate-800 tracking-tight">Overview Dashboard</h1>
+            </div>
+
+            <!-- User Profile -->
+            <div class="flex items-center space-x-6">
+                {% set display_name = session.get('username', session.get('user', 'Admin User')) %}
+                <div
+                    class="flex items-center bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm hidden sm:flex">
+                    <span class="text-sm font-bold text-slate-600 mr-2 capitalize">{{ display_name }}</span>
+                    <div
+                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200 uppercase">
+                        {{ display_name[0] }}
+                    </div>
+                </div>
+
+                <a href="{{ url_for('logout') }}"
+                    class="flex items-center text-rose-500 hover:text-rose-700 font-bold text-sm transition-colors px-3 py-2 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-100">
+                    <i class="fa-solid fa-arrow-right-from-bracket sm:mr-2"></i> <span
+                        class="hidden sm:inline">Logout</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Scrollable Dashboard Content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-8 custom-scrollbar relative">
+
+            <!-- REPEATING LOGO WATERMARK -->
+            <!-- Simplified HTML tag, all styling is now safely in the CSS block -->
+            <div class="logo-watermark"></div>
+
+            <!-- Dashboard Content Wrapper (z-10 puts it above the watermark) -->
+            <div class="max-w-7xl mx-auto space-y-6 relative z-10">
+
+                <!-- TOP METRICS ROW -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                    <!-- Active Jobs -->
+                    <div
+                        class="bg-white/90 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between group hover:border-blue-300 transition-colors">
+                        <div>
+                            <p class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1">Active
+                                Job Postings</p>
+                            <h3 class="text-3xl font-black text-slate-800">{{ stats.active_jobs }}</h3>
+                        </div>
+                        <div
+                            class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors border border-blue-100">
+                            <i class="fa-solid fa-briefcase text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- Candidates Processed -->
+                    <div
+                        class="bg-white/90 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between group hover:border-emerald-300 transition-colors">
+                        <div>
+                            <p class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1">
+                                Candidates Processed</p>
+                            <h3 class="text-3xl font-black text-slate-800">{{ stats.total_candidates }}</h3>
+                        </div>
+                        <div
+                            class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors border border-emerald-100">
+                            <i class="fa-solid fa-users-viewfinder text-emerald-600 text-xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- Selected Candidates -->
+                    <div
+                        class="bg-white/90 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between group hover:border-indigo-300 transition-colors">
+                        <div>
+                            <p class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1">Total
+                                Hired</p>
+                            <h3 class="text-3xl font-black text-slate-800">{{ stats.selected_count }}</h3>
+                        </div>
+                        <div
+                            class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors border border-indigo-100">
+                            <i class="fa-solid fa-user-check text-indigo-600 text-xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- Pending Reviews -->
+                    <div
+                        class="bg-white/90 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between group hover:border-amber-300 transition-colors">
+                        <div>
+                            <p class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1">Pending
+                                Reviews</p>
+                            <h3 class="text-3xl font-black text-slate-800">{{ stats.pending_reviews }}</h3>
+                        </div>
+                        <div
+                            class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors border border-amber-100">
+                            <i class="fa-solid fa-file-signature text-amber-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MIDDLE SECTION -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- LEFT COLUMN -->
+                    <div
+                        class="lg:col-span-2 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+                        <div
+                            class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="text-base font-black text-slate-800">Recent Job Postings</h3>
+                            <a href="{{ url_for('job_descriptions') }}"
+                                class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors">View All
+                                <i class="fa-solid fa-arrow-right ml-1"></i></a>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white/80 border-b border-slate-200">
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">
+                                            Job Title</th>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">
+                                            Job ID</th>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest text-center">
+                                            Applied</th>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest text-center">
+                                            Status</th>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest text-right">
+                                            Date Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    {% for job in recent_jobs %}
+                                    <tr class="hover:bg-slate-50/80 transition-colors">
+                                        <td class="px-6 py-4 text-sm font-bold text-slate-800">{{ job.title }}</td>
+                                        <td class="px-6 py-4 text-xs font-bold font-mono text-slate-500">{{ job.id }}
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span
+                                                class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-100">{{
+                                                job.applied_count }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                                                Active
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-xs font-medium text-slate-500 text-right">{{
+                                            job.created_at }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                                            <i class="fa-solid fa-folder-open text-3xl mb-3 text-slate-300"></i>
+                                            <p class="text-sm font-medium">No recent jobs found.</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: Chart & Quick Actions -->
+                    <div class="flex flex-col gap-6">
+
+                        <!-- Pipeline Chart -->
+                        <div
+                            class="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
+                            <h3 class="text-sm font-black text-slate-800 mb-6">Candidate Pipeline Health</h3>
+                            <div
+                                class="relative w-full aspect-square max-h-48 mx-auto flex items-center justify-center">
+                                <canvas id="pipelineChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <h3 class="text-sm font-black text-slate-800 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <a href="{{ url_for('create_job') }}"
+                                    class="flex items-center p-3 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50/80 hover:bg-white">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
+                                        <i class="fa-solid fa-plus text-slate-400 group-hover:text-blue-600"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p
+                                            class="text-sm font-bold text-slate-700 group-hover:text-blue-700 transition-colors">
+                                            Create New Job</p>
+                                        <p class="text-xs font-medium text-slate-500">Draft an AI-generated JD</p>
+                                    </div>
+                                </a>
+
+                                <a href="{{ url_for('excel_upload') }}"
+                                    class="flex items-center p-3 rounded-xl border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50/80 hover:bg-white">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center group-hover:bg-emerald-50 group-hover:border-emerald-100 transition-colors">
+                                        <i
+                                            class="fa-solid fa-file-excel text-slate-400 group-hover:text-emerald-600"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p
+                                            class="text-sm font-bold text-slate-700 group-hover:text-emerald-700 transition-colors">
+                                            Process Excel</p>
+                                        <p class="text-xs font-medium text-slate-500">Bulk rank candidates</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const texts = document.querySelectorAll('.sidebar-text');
+            const logo = document.getElementById('sidebar-logo');
+
+            if (sidebar.classList.contains('w-64')) {
+                sidebar.classList.remove('w-64'); sidebar.classList.add('w-20', 'sidebar-collapsed'); logo.classList.remove('mr-3');
+            } else {
+                sidebar.classList.remove('w-20', 'sidebar-collapsed'); sidebar.classList.add('w-64'); setTimeout(() => logo.classList.add('mr-3'), 150);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById('pipelineChart').getContext('2d');
+
+            const selected = parseInt("{{ stats.selected_count | default(0) }}", 10);
+            const pending = parseInt("{{ stats.pending_reviews | default(0) }}", 10);
+            const rejected = parseInt("{{ stats.rejected_count | default(0) }}", 10);
+
+            if (selected === 0 && pending === 0 && rejected === 0) {
+                document.getElementById('pipelineChart').outerHTML = '<div class="text-center text-slate-400 text-xs font-bold mt-10">No pipeline data available yet.</div>';
+                return;
+            }
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Selected', 'Pending', 'Rejected/Not Appeared'],
+                    datasets: [{
+                        data: [selected, pending, rejected],
+                        backgroundColor: [
+                            '#4f46e5', // Indigo-600
+                            '#fbbf24', // Amber-400
+                            '#e2e8f0'  // Slate-200
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: {
+                                    family: "'Segoe UI', sans-serif",
+                                    size: 11,
+                                    weight: 'bold'
+                                },
+                                color: '#64748b'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

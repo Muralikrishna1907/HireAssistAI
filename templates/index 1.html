@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Quiz</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; background-color: #f8f9fa; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        
+        .header { display: flex; justify-content: space-between; font-weight: bold; color: #555; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        h2 { margin-top: 0; color: #333; }
+        
+        /* READ ONLY TEXT AREA STYLING */
+        textarea { 
+            width: 100%; 
+            height: 120px; 
+            margin-top: 15px; 
+            padding: 15px; 
+            font-size: 18px; 
+            border: 2px dashed #ccc; /* Dashed line to suggest "Not a normal input" */
+            border-radius: 5px; 
+            resize: none; 
+            background-color: #fdfdfd; 
+            color: #333;
+            outline: none;
+        }
+        
+        /* Remove focus glow since they can't type */
+        textarea:focus { border-color: #ccc; }
+
+        .btn-row { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+        
+        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 5px; font-size: 16px; transition: 0.3s; font-weight: bold; }
+        
+        .mic-btn { background-color: #007bff; color: white; width: 100%; }
+        .mic-btn:hover { background-color: #0056b3; }
+        .mic-btn.listening { background-color: #dc3545; animation: pulse 1.5s infinite; }
+        
+        .clear-btn { background-color: #6c757d; color: white; }
+        .clear-btn:hover { background-color: #5a6268; }
+
+        .submit-btn { background-color: #28a745; color: white; width: 100%; }
+        .submit-btn:hover { background-color: #218838; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <span>TOPIC: {{ topic_name }}</span>
+        <span>Question {{ index }} of {{ total }}</span>
+    </div>
+
+    <h2>{{ question.text }}</h2>
+
+    <form action="/quiz" method="POST">
+        <textarea id="answerBox" name="answer" placeholder="Press Record and speak your answer..." readonly required></textarea>
+        
+        <div class="btn-row">
+            <button type="button" id="micBtn" class="mic-btn" onclick="toggleRecording()">
+                🎤 Record Answer
+            </button>
+        </div>
+
+        <!-- <div class="btn-row"> -->
+            <!-- <button type="button" class="clear-btn" onclick="clearText()">Reset</button> -->
+            <!-- <button type="submit" class="submit-btn">Submit ➡</button> -->
+             
+        <!-- </div> -->
+         <div class="btn-row">
+            <!-- <button type="button" class="clear-btn" onclick="clearText()">Reset</button> -->
+
+            <button type="submit" class="submit-btn">
+                    {% if index == total %}
+                             Submit
+                    {% else %}
+                             Next ➡
+                    {% endif %}
+                 </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        alert("Your browser does not support Speech Recognition. Please use Chrome or Edge.");
+    } else {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        const micBtn = document.getElementById('micBtn');
+        const answerBox = document.getElementById('answerBox');
+        let isRecording = false;
+
+        function toggleRecording() {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        // function clearText() {
+        //     answerBox.value = "";
+        // }
+
+        recognition.onstart = function() {
+            isRecording = true;
+            micBtn.textContent = "⏹ Stop Recording";
+            micBtn.classList.add("listening");
+            answerBox.placeholder = "Listening...";
+        };
+
+        recognition.onend = function() {
+            isRecording = false;
+            micBtn.textContent = "🎤 Record Answer";
+            micBtn.classList.remove("listening");
+            if (answerBox.value === "") {
+                answerBox.placeholder = "Press Record and speak your answer...";
+            }
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            // Append text so they can pause and continue speaking
+            if(answerBox.value.length > 0) {
+                answerBox.value += " " + transcript;
+            } else {
+                answerBox.value = transcript;
+            }
+        };
+        
+        recognition.onerror = function(event) {
+            console.error("Speech recognition error", event.error);
+            isRecording = false;
+            micBtn.textContent = "🎤 Record Answer";
+            micBtn.classList.remove("listening");
+            answerBox.placeholder = "Error hearing audio. Try again.";
+        };
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Responses</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Solid Glass Effect */
+        .solid-glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-[linear-gradient(135deg,#172554,#1e3a8a,#2563eb)] min-h-screen flex flex-col font-sans antialiased text-white selection:bg-blue-400 relative">
+
+    <!-- SBP Logo Watermark (Fixed position so it doesn't move when scrolling) -->
+    <div class="fixed inset-0 flex items-center justify-center pointer-events-none z-0">
+        <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="Watermark"
+            class="w-[80vw] md:w-[50vw] max-w-[800px] opacity-10 object-contain select-none">
+    </div>
+
+    <!-- Sticky Frosted Header -->
+    <header
+        class="h-20 flex items-center justify-between px-6 sm:px-10 w-full z-50 sticky top-0 bg-black/10 backdrop-blur-md border-b border-white/20 shadow-lg">
+        <div class="flex items-center">
+            <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="Logo"
+                class="h-10 w-auto mr-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            <h2
+                class="text-xl font-bold hidden sm:block drop-shadow-md border-l border-white/30 pl-4 ml-4 tracking-wide text-white">
+                Interview Responses</h2>
+        </div>
+        <button onclick="window.location.href='/thankyou'"
+            class="bg-black/30 hover:bg-black/50 border border-white/20 font-bold py-2.5 px-6 rounded-xl transition-colors flex items-center text-sm shadow-md tracking-wide">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Back
+        </button>
+    </header>
+
+    <!-- Main Content (Scrollable) -->
+    <main class="flex-1 w-full max-w-4xl mx-auto p-6 md:p-10 z-10 relative">
+
+        <div class="mb-8">
+            <h1 class="text-3xl font-black mb-2 drop-shadow-lg tracking-tight">Review Your Answers</h1>
+            <p class="text-white/80 text-sm font-semibold tracking-wide">Below is a summary of the responses you
+                provided during the assessment.</p>
+        </div>
+
+        <div class="space-y-6 pb-12">
+            {% for item in responses %}
+            <!-- Individual Question Card -->
+            <div class="solid-glass p-6 md:p-8 rounded-2xl relative overflow-hidden">
+                <div class="flex items-start mb-5">
+                    <span
+                        class="flex-shrink-0 w-8 h-8 rounded-full bg-white text-blue-900 font-black mr-4 mt-1 flex items-center justify-center shadow-md border border-blue-200">{{
+                        loop.index }}</span>
+                    <h3 class="text-lg md:text-xl font-bold leading-snug text-white drop-shadow-sm">{{ item.question }}
+                    </h3>
+                </div>
+
+                <!-- Answer Box -->
+                <div class="bg-black/30 rounded-xl p-5 border border-white/20 ml-0 md:ml-12 shadow-inner">
+                    <p class="text-[11px] font-extrabold text-white/60 uppercase tracking-widest mb-3">Your Answer</p>
+                    <p class="text-white/95 text-base leading-relaxed whitespace-pre-wrap font-medium tracking-wide">{{
+                        item.answer or "No Answer Given" }}</p>
+                </div>
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="solid-glass p-12 rounded-2xl text-center">
+                <i class="fa-solid fa-folder-open text-5xl text-white/40 mb-4 drop-shadow-sm"></i>
+                <p class="font-bold text-lg text-white/80 tracking-wide">No responses recorded.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+    </main>
+</body>
+
+</html>

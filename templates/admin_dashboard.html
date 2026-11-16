@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hire Assist AI - Dashboard Preview</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Smooth transitions for sidebar text */
+        .sidebar-text {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .sidebar-collapsed .sidebar-text {
+            opacity: 0;
+            display: none;
+        }
+
+        .sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar-collapsed .nav-icon {
+            margin-right: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 flex h-screen font-sans antialiased text-slate-800 overflow-hidden selection:bg-blue-200">
+
+    <!-- Sidebar (Deep Navy for strong contrast) -->
+    <aside id="sidebar"
+        class="w-64 bg-[#0B1121] text-slate-300 flex flex-col shadow-2xl z-20 flex-shrink-0 transition-all duration-300 ease-in-out">
+
+        <!-- Logo Area -->
+        <div class="h-20 flex items-center px-5 border-b border-white/10 overflow-hidden">
+            <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="SBP Logo" id="sidebar-logo"
+                class="h-8 w-auto flex-shrink-0 mr-3 grayscale brightness-200 transition-all duration-300">
+            <span class="sidebar-text text-white font-bold text-lg tracking-wide whitespace-nowrap">Hire Assist
+                AI</span>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex-1 overflow-y-auto py-6 px-3 space-y-8 custom-scrollbar overflow-x-hidden">
+
+            <!-- Main Menu -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 whitespace-nowrap">
+                    Main Menu</p>
+                <nav class="space-y-1">
+                    <!-- Overview -->
+                    <!-- <a href="{{ url_for('admin_home') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-house w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Overview</span>
+                    </a> -->
+                    <!-- Dashboard Preview (Active) -->
+                    <a href="{{ url_for('dashboard') if url_for else '/dashboard' }}"
+                        class="nav-item flex items-center px-3 py-3 bg-blue-600/10 text-blue-400 rounded-xl border-l-4 border-blue-500 transition-colors">
+                        <i class="fa-solid fa-chart-line w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('manage_users') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-users w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Manage Users</span>
+                    </a>
+                    <a href="{{ url_for('reports') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-file-invoice w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Reports</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Job Management -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 whitespace-nowrap">
+                    Job Management</p>
+                <nav class="space-y-1">
+                    <a href="{{ url_for('excel_upload') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-list-check w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Smart Shortlisting</span>
+                    </a>
+                    <a href="{{ url_for('create_job') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-square-plus w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Create Job</span>
+                    </a>
+                    <a href="{{ url_for('job_descriptions') if url_for else '/job_descriptions' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-list w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">View All Jobs</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+        <!-- Top Header -->
+        <header
+            class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 sm:px-8 z-10 flex-shrink-0 shadow-sm">
+            <div class="flex items-center">
+                <button onclick="toggleSidebar()"
+                    class="mr-5 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-xl font-black text-slate-800 tracking-tight">Dashboard Preview</h1>
+            </div>
+
+            <!-- User Profile & Actions -->
+            <div class="flex items-center space-x-4 sm:space-x-6">
+                {% set display_name = session.get('username', session.get('user', 'Admin User')) %}
+                <div
+                    class="flex items-center bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm hidden sm:flex">
+                    <span class="text-sm font-bold text-slate-600 mr-2 capitalize">{{ display_name }}</span>
+                    <div
+                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200 uppercase">
+                        {{ display_name[0] }}
+                    </div>
+                </div>
+
+                <a href="{{ url_for('logout') if url_for else '/logout' }}"
+                    class="flex items-center text-rose-500 hover:text-rose-700 font-bold text-sm transition-colors px-3 py-2 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-100">
+                    <i class="fa-solid fa-arrow-right-from-bracket sm:mr-2"></i> <span
+                        class="hidden sm:inline">Logout</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-8 custom-scrollbar">
+
+            <!-- 1. Summary KPI Cards (Filter Buttons) -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                <!-- White Total Card (Active by Default) -->
+                <div id="card-ALL"
+                    class="kpi-card opacity-100 ring-4 ring-blue-500 ring-offset-2 ring-offset-slate-50 bg-white border border-slate-300 rounded-2xl shadow-sm p-4 text-center cursor-pointer transition-all duration-300"
+                    onclick="filterByCard('ALL')">
+                    <div class="text-slate-500 text-xs font-bold mb-1"><i
+                            class="fa-solid fa-chart-simple mr-1 text-slate-400"></i> Total</div>
+                    <p id="totalCount" class="text-3xl font-black text-slate-800">0</p>
+                </div>
+                <div id="card-SELECTED"
+                    class="kpi-card opacity-80 hover:opacity-100 hover:-translate-y-1 bg-emerald-500 border border-emerald-600 rounded-2xl shadow-sm p-4 text-center cursor-pointer transition-all duration-300"
+                    onclick="filterByCard('SELECTED')">
+                    <div class="text-emerald-50 text-xs font-bold mb-1"><i class="fa-solid fa-check-circle mr-1"></i>
+                        Selected</div>
+                    <p id="selectedCount" class="text-3xl font-black text-white">0</p>
+                </div>
+                <div id="card-REJECTED"
+                    class="kpi-card opacity-80 hover:opacity-100 hover:-translate-y-1 bg-rose-500 border border-rose-600 rounded-2xl shadow-sm p-4 text-center cursor-pointer transition-all duration-300"
+                    onclick="filterByCard('REJECTED')">
+                    <div class="text-rose-50 text-xs font-bold mb-1"><i class="fa-solid fa-times-circle mr-1"></i>
+                        Rejected</div>
+                    <p id="rejectedCount" class="text-3xl font-black text-white">0</p>
+                </div>
+                <div id="card-PENDING"
+                    class="kpi-card opacity-80 hover:opacity-100 hover:-translate-y-1 bg-amber-500 border border-amber-600 rounded-2xl shadow-sm p-4 text-center cursor-pointer transition-all duration-300"
+                    onclick="filterByCard('PENDING')">
+                    <div class="text-amber-50 text-xs font-bold mb-1"><i class="fa-solid fa-hourglass-half mr-1"></i>
+                        Pending</div>
+                    <p id="pendingCount" class="text-3xl font-black text-white">0</p>
+                </div>
+                <div id="card-NOT_APPEARED"
+                    class="kpi-card opacity-80 hover:opacity-100 hover:-translate-y-1 bg-slate-200 border border-slate-300 rounded-2xl shadow-sm p-4 text-center cursor-pointer transition-all duration-300"
+                    onclick="filterByCard('NOT APPEARED')">
+                    <div class="text-slate-600 text-xs font-bold mb-1"><i
+                            class="fa-solid fa-user-slash mr-1 text-slate-500"></i> Not Appeared</div>
+                    <p id="naCount" class="text-3xl font-black text-slate-800">0</p>
+                </div>
+                <div id="card-VIOLATED"
+                    class="kpi-card opacity-80 hover:opacity-100 hover:-translate-y-1 bg-purple-100 border border-purple-200 rounded-2xl shadow-sm p-4 text-center cursor-pointer transition-all duration-300"
+                    onclick="filterByCard('VIOLATED')">
+                    <div class="text-purple-600 text-xs font-bold mb-1"><i
+                            class="fa-solid fa-triangle-exclamation mr-1 text-purple-500"></i> Violated</div>
+                    <p id="violatedCount" class="text-3xl font-black text-purple-800">0</p>
+                </div>
+            </div>
+
+            <!-- 2. Data Table Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-300 overflow-hidden mb-8 flex flex-col"
+                style="height: 480px;">
+                <div
+                    class="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
+                    <h3 class="text-lg font-black text-slate-800">Candidate Details</h3>
+                    <!-- Search Bar -->
+                    <div class="relative w-full sm:w-80">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-slate-400"></i>
+                        </div>
+                        <input type="text" id="tableSearch" onkeyup="filterTableBySearch()"
+                            placeholder="Search candidates..."
+                            class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                    </div>
+                </div>
+
+                <div class="overflow-y-auto overflow-x-auto custom-scrollbar flex-1 relative bg-white">
+                    <table class="min-w-full divide-y divide-slate-200 candidates-table">
+                        <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    S.No</th>
+                                <th
+                                    class="px-4 py-4 text-left text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    Name</th>
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    CV</th>
+                                <th
+                                    class="px-4 py-4 text-left text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    Email</th>
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    ID</th>
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    Exp</th>
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    Job ID</th>
+
+                                <!-- CV Status with Filter -->
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap relative">
+                                    <div class="flex items-center justify-center cursor-pointer group"
+                                        onclick="toggleStatusFilter()">
+                                        CV Status <i
+                                            class="fa-solid fa-caret-down ml-1.5 text-slate-400 group-hover:text-slate-600"></i>
+                                    </div>
+                                    <div id="statusFilterBox"
+                                        class="hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-slate-300 rounded-lg shadow-xl py-2 w-36 z-50 font-normal normal-case">
+                                        <div class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                                            onclick="filterStatus('ALL')">All</div>
+                                        <div class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                                            onclick="filterStatus('SHORTLISTED')">Shortlisted</div>
+                                        <div class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                                            onclick="filterStatus('NOT SHORTLISTED')">Not Shortlisted</div>
+                                    </div>
+                                </th>
+
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    CV Score</th>
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    Exam Score</th>
+
+                                <!-- Final Status with Filter -->
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap relative">
+                                    <div class="flex items-center justify-center cursor-pointer group"
+                                        onclick="toggleFinalFilter()">
+                                        Final Status <i
+                                            class="fa-solid fa-caret-down ml-1.5 text-slate-400 group-hover:text-slate-600"></i>
+                                    </div>
+                                    <div id="finalFilterBox"
+                                        class="hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-slate-300 rounded-lg shadow-xl py-2 w-36 z-50 font-normal normal-case">
+                                        <div class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                                            onclick="filterFinalStatus('ALL')">All</div>
+                                        <div class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                                            onclick="filterFinalStatus('SELECTED')">Selected</div>
+                                        <div class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                                            onclick="filterFinalStatus('REJECTED')">Rejected</div>
+                                        <div class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                                            onclick="filterFinalStatus('NOT APPEARED')">Not Appeared</div>
+                                        <div class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                                            onclick="filterFinalStatus('VIOLATED')">Violated</div>
+                                    </div>
+                                </th>
+
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    Actions</th>
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    Report</th>
+                                <th
+                                    class="px-4 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                                    Image</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100">
+                            {% for c in candidates %}
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="px-4 py-4 text-center text-xs text-slate-500 whitespace-nowrap">{{ loop.index
+                                    }}</td>
+                                <td class="px-4 py-4 text-left text-sm font-bold text-slate-800 whitespace-nowrap">{{
+                                    c.name }}</td>
+                                <td class="px-4 py-4 text-center whitespace-nowrap">
+                                    <a href="{{ url_for('download_attachment', candidate_id=c.id) }}"
+                                        class="inline-block hover:scale-110 transition-transform" title="Download PDF">
+                                        <img src="{{ url_for('static', filename='images/PDF_image.png') }}" alt="PDF"
+                                            class="w-5 h-5 mx-auto">
+                                    </a>
+                                </td>
+                                <td class="px-4 py-4 text-left text-xs text-slate-600 whitespace-nowrap">{{ c.email }}
+                                </td>
+                                <td class="px-4 py-4 text-center text-xs font-mono text-slate-500 whitespace-nowrap">{{
+                                    c.id }}</td>
+                                <td class="px-4 py-4 text-center text-xs font-bold text-slate-600 whitespace-nowrap">{{
+                                    c.experience }} Yrs</td>
+                                <td class="px-4 py-4 text-center text-xs font-mono text-slate-500 whitespace-nowrap">{{
+                                    c.job_id}}</td>
+
+                                <!-- CV Status Cell -->
+                                <td class="px-4 py-4 text-center text-xs font-bold status-cell whitespace-nowrap">{{
+                                    c.status }}</td>
+
+                                <td class="px-4 py-4 text-center text-sm font-black text-blue-600 whitespace-nowrap">{{
+                                    c.match_score }}</td>
+                                <td class="px-4 py-4 text-center text-sm font-black text-blue-600 whitespace-nowrap">{{
+                                    c.average }}</td>
+
+                                <td class="px-4 py-4 text-center text-xs whitespace-nowrap">
+                                    {% set final = (c.final_status or '') | trim | upper %}
+                                    {% if final == 'SELECTED' %}
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">{{
+                                        c.final_status }}</span>
+                                    {% elif final == 'REJECTED' %}
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">{{
+                                        c.final_status }}</span>
+                                    {% elif final == 'PENDING' %}
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">{{
+                                        c.final_status }}</span>
+                                    {% elif final == 'VIOLATED' %}
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">{{
+                                        c.final_status }}</span>
+                                    {% else %}
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-200 text-slate-700 border border-slate-300">{{
+                                        c.final_status }}</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="px-4 py-4 text-center whitespace-nowrap">
+                                    <div class="flex justify-center space-x-2">
+                                        {% set status = (c.final_status or '') | trim | upper %}
+                                        {% if status == "PENDING" %}
+                                        <button
+                                            class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                                            onclick="updateStatus('{{ c.id }}','SELECT')">
+                                            Select
+                                        </button>
+                                        <button
+                                            class="bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                                            onclick="updateStatus('{{ c.id }}','REJECT')">
+                                            Reject
+                                        </button>
+                                        {% else %}
+                                        <button
+                                            class="bg-slate-100 border border-slate-200 text-slate-400 text-[11px] font-bold py-1.5 px-3 rounded-lg cursor-not-allowed"
+                                            disabled>Select</button>
+                                        <button
+                                            class="bg-slate-100 border border-slate-200 text-slate-400 text-[11px] font-bold py-1.5 px-3 rounded-lg cursor-not-allowed"
+                                            disabled>Reject</button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 text-center whitespace-nowrap">
+                                    <a href="/candidate-report/{{ c.id }}" target="_blank"
+                                        class="text-slate-500 hover:text-blue-600 transition-colors text-lg">
+                                        <i class="fa-solid fa-file-arrow-down"></i>
+                                    </a>
+                                </td>
+                                <td class="px-4 py-4 text-center whitespace-nowrap">
+                                    {% set status = (c.final_status or '') | trim | upper %}
+                                    {% if c.has_face and status not in ["VIOLATED", "REJECTED"] %}
+                                    <button class="text-blue-500 hover:text-blue-700 transition-colors text-xl"
+                                        onclick="previewFace('{{ c.id }}')" title="Preview Face">
+                                        <i class="fa-solid fa-image-portrait"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="text-slate-300 cursor-not-allowed text-xl" disabled
+                                        title="Not Available">
+                                        <i class="fa-solid fa-image-portrait"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. Line Chart Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-300 p-6 mb-8">
+                <h3 class="text-lg font-black text-slate-800 mb-6">Daily Candidate Trends</h3>
+                <div class="relative h-72 w-full">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 4. Pie Charts Section (Bottom) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Pie Chart 1 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-300 p-6">
+                    <h3 class="text-base font-black text-slate-800 text-center mb-6">CV Status Distribution</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <!-- Pie Chart 2 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-300 p-6">
+                    <h3 class="text-base font-black text-slate-800 text-center mb-6">Exam Response Analysis</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="responseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Face Preview Modal -->
+    <div id="faceModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 items-center justify-center">
+        <div
+            class="bg-white p-6 rounded-2xl shadow-2xl text-center max-w-lg w-full mx-4 relative border border-slate-200">
+            <h3 class="text-lg font-black text-slate-800 mb-5">Captured Candidate Image</h3>
+            <div class="flex justify-center mb-6">
+                <img id="faceImage"
+                    class="max-w-full max-h-[50vh] rounded-xl border border-slate-200 shadow-sm object-contain"
+                    alt="Candidate Face">
+            </div>
+            <button onclick="closeFace()"
+                class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-8 rounded-xl transition-colors text-sm shadow-md">
+                Close Preview
+            </button>
+        </div>
+    </div>
+
+    <!-- SAFELY PASS BACKEND DATA -->
+    <script id="candidates-data" type="application/json">
+        {{ candidates | tojson }}
+    </script>
+
+    <!-- UI Interactions -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const texts = document.querySelectorAll('.sidebar-text');
+            const logo = document.getElementById('sidebar-logo');
+
+            if (sidebar.classList.contains('w-72') || sidebar.classList.contains('w-64')) {
+                sidebar.classList.remove('w-72', 'w-64'); sidebar.classList.add('w-20', 'sidebar-collapsed'); logo.classList.remove('mr-3');
+            } else {
+                sidebar.classList.remove('w-20', 'sidebar-collapsed'); sidebar.classList.add('w-64'); setTimeout(() => logo.classList.add('mr-3'), 150);
+            }
+        }
+
+        function filterTableBySearch() {
+            const input = document.getElementById("tableSearch");
+            const filter = input.value.toUpperCase();
+            const rows = document.querySelectorAll(".candidates-table tbody tr");
+
+            rows.forEach(row => {
+                const text = row.innerText.toUpperCase();
+                row.style.display = text.indexOf(filter) > -1 ? "" : "none";
+            });
+        }
+
+        function toggleStatusFilter() { document.getElementById("statusFilterBox").classList.toggle("hidden"); }
+
+        function filterStatus(status) {
+            const rows = document.querySelectorAll(".candidates-table tbody tr");
+            rows.forEach(row => {
+                const cell = row.cells[7]; // CV Status column
+                if (!cell) return;
+                const text = cell.innerText.trim().toUpperCase();
+                row.style.display = (status === "ALL" || text === status) ? "" : "none";
+            });
+            document.getElementById("statusFilterBox").classList.add("hidden");
+        }
+
+        function toggleFinalFilter() { document.getElementById("finalFilterBox").classList.toggle("hidden"); }
+
+        function filterFinalStatus(status) {
+            const rows = document.querySelectorAll(".candidates-table tbody tr");
+            rows.forEach(row => {
+                const cell = row.cells[10]; // Final Status column
+                if (!cell) return;
+                const text = cell.innerText.trim().toUpperCase();
+                row.style.display = (status === "ALL" || text === status) ? "" : "none";
+            });
+            document.getElementById("finalFilterBox").classList.add("hidden");
+        }
+
+        // --- HIGHLIGHT LOGIC ---
+        function filterByCard(type) {
+            const rows = document.querySelectorAll(".candidates-table tbody tr");
+            rows.forEach(row => {
+                const finalCell = row.cells[10];
+                const avgCell = row.cells[9];
+                if (!finalCell) return;
+                const finalStatus = finalCell.innerText.trim().toUpperCase();
+                const avgText = avgCell ? avgCell.innerText.replace("%", "") : "";
+                const avg = Number(avgText);
+
+                let show = false;
+                if (type === "ALL") show = true;
+                else if (type === "PENDING") show = avg > 40 && avg <= 50;
+                else show = finalStatus === type;
+
+                row.style.display = show ? "" : "none";
+            });
+
+            document.querySelectorAll('.kpi-card').forEach(card => {
+                card.classList.remove('ring-4', 'ring-blue-500', 'ring-offset-2', 'ring-offset-slate-50', 'opacity-100');
+                card.classList.add('opacity-80', 'hover:-translate-y-1', 'hover:opacity-100');
+            });
+
+            const safeId = 'card-' + type.replace(/\s+/g, '_');
+            const activeCard = document.getElementById(safeId);
+            if (activeCard) {
+                activeCard.classList.remove('opacity-80', 'hover:-translate-y-1', 'hover:opacity-100');
+                activeCard.classList.add('ring-4', 'ring-blue-500', 'ring-offset-2', 'ring-offset-slate-50', 'opacity-100');
+            }
+        }
+
+        function colorRowsByStatus() {
+            const rows = document.querySelectorAll(".candidates-table tbody tr");
+            rows.forEach(row => {
+                const statusCell = row.cells[7]; // CV Status column
+                if (!statusCell) return;
+                const status = statusCell.innerText.trim().toUpperCase();
+                if (status === "SHORTLISTED") {
+                    statusCell.classList.add("text-emerald-600");
+                } else if (status === "NOT SHORTLISTED") {
+                    statusCell.classList.add("text-rose-600");
+                }
+            });
+        }
+        window.addEventListener("load", colorRowsByStatus);
+
+        function updateStatus(id, action) {
+            fetch("/update-status", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ candidate_id: id, action: action })
+            })
+                .then(res => res.json()).then(data => { alert(data.message || 'Updated'); location.reload(); })
+                .catch(err => { alert("Request failed"); });
+        }
+
+        function previewFace(id) {
+            const modal = document.getElementById("faceModal");
+            const img = document.getElementById("faceImage");
+            img.src = "/face-preview/" + id;
+            modal.classList.remove("hidden"); modal.classList.add("flex");
+        }
+
+        function closeFace() {
+            const modal = document.getElementById("faceModal");
+            modal.classList.add("hidden"); modal.classList.remove("flex");
+        }
+    </script>
+
+    <!-- Chart & Data Logic -->
+    <script>
+        window.candidates = JSON.parse(document.getElementById("candidates-data").textContent);
+
+        let shortlisted = 0, rejected = 0;
+        let r_rejected = 0, not_sure = 0, accepted = 0, not_appeared = 0, violated = 0;
+
+        window.candidates.forEach(c => {
+            const cvStatus = (c.status || "").toUpperCase();
+            if (cvStatus === "SHORTLISTED") shortlisted++;
+            if (cvStatus === "NOT SHORTLISTED") rejected++;
+
+            const finalStatus = (c.final_status || "").trim().toUpperCase();
+            if (finalStatus === "REJECTED") r_rejected++;
+            else if (finalStatus === "SELECTED") accepted++;
+            else if (finalStatus === "PENDING") not_sure++;
+            else if (finalStatus === "NOT APPEARED") not_appeared++;
+            else if (finalStatus === "VIOLATED") violated++;
+        });
+
+        document.getElementById("totalCount").innerText = window.candidates.length;
+        document.getElementById("selectedCount").innerText = accepted;
+        document.getElementById("rejectedCount").innerText = r_rejected;
+        document.getElementById("pendingCount").innerText = not_sure;
+        document.getElementById("naCount").innerText = not_appeared;
+        document.getElementById("violatedCount").innerText = violated;
+
+        new Chart(document.getElementById("statusChart"), {
+            type: "pie",
+            data: {
+                labels: ["Shortlisted", "Not Shortlisted"],
+                datasets: [{ data: [shortlisted, rejected], backgroundColor: ["#10b981", "#ef4444"] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { padding: 15, font: { family: "'Inter', sans-serif" } } } } }
+        });
+
+        new Chart(document.getElementById("responseChart"), {
+            type: "pie",
+            data: {
+                labels: ["Rejected", "Pending", "Selected", "Not Appeared", "Violated"],
+                datasets: [{ data: [r_rejected, not_sure, accepted, not_appeared, violated], backgroundColor: ["#ef4444", "#f59e0b", "#10b981", "#cbd5e1", "#a855f7"] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { padding: 15, font: { family: "'Inter', sans-serif" } } } } }
+        });
+
+        (function () {
+            const dailyData = {};
+            if (!window.candidates || window.candidates.length === 0) return;
+
+            window.candidates.forEach(c => {
+                if (c.created_at) {
+                    const date = new Date(c.created_at).toISOString().split("T")[0];
+                    if (!dailyData[date]) dailyData[date] = { applied: 0, examTaken: 0, selected: 0, rejected: 0, shortlisted: 0, notShortlisted: 0 };
+                    dailyData[date].applied++;
+
+                    const cvStatus = (c.status || "").toUpperCase();
+                    if (cvStatus === "SHORTLISTED") dailyData[date].shortlisted++;
+                    else if (cvStatus === "NOT SHORTLISTED") dailyData[date].notShortlisted++;
+
+                    const finalStatus = (c.final_status || "").toUpperCase();
+                    if (finalStatus === "SELECTED") dailyData[date].selected++;
+                    if (finalStatus === "REJECTED") dailyData[date].rejected++;
+                }
+                if (c.exam_submit) {
+                    const date = new Date(c.exam_submit).toISOString().split("T")[0];
+                    if (!dailyData[date]) dailyData[date] = { applied: 0, examTaken: 0, selected: 0, rejected: 0 };
+                    dailyData[date].examTaken++;
+                }
+            });
+
+            const labels = Object.keys(dailyData).sort();
+            const ctx = document.getElementById("lineChart").getContext("2d");
+
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        // Changed tension to 0 for straight lines
+                        { label: "Applications", data: labels.map(d => dailyData[d].applied), borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,0.1)", fill: true, tension: 0, pointRadius: 4 },
+                        { label: "Exam Taken", data: labels.map(d => dailyData[d].examTaken), borderColor: "#f59e0b", backgroundColor: "rgba(245,158,11,0.1)", fill: true, tension: 0, pointRadius: 4 },
+                        { label: "Selected", data: labels.map(d => dailyData[d].selected), borderColor: "#10b981", backgroundColor: "rgba(16,185,129,0.1)", fill: true, tension: 0, pointRadius: 4 },
+                        { label: "Rejected", data: labels.map(d => dailyData[d].rejected), borderColor: "#f43f5e", backgroundColor: "rgba(244,63,94,0.1)", fill: true, tension: 0, pointRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: "top", labels: { boxWidth: 12, padding: 15, font: { family: "'Inter', sans-serif" } } }
+                    },
+                    scales: {
+                        y: { grid: { borderDash: [4, 4] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>

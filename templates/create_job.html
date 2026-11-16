@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hire Assist AI - Create Job</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Smooth transitions for sidebar text */
+        .sidebar-text {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .sidebar-collapsed .sidebar-text {
+            opacity: 0;
+            display: none;
+        }
+
+        .sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar-collapsed .nav-icon {
+            margin-right: 0;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner {
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-loading .btn-icon {
+            display: none;
+        }
+
+        .btn-disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* FIX: Hide number spinners so text fits in small inputs */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 flex h-screen font-sans antialiased text-slate-800 overflow-hidden selection:bg-blue-200">
+
+    <!-- Sidebar (Deep Navy for strong contrast) -->
+    <aside id="sidebar"
+        class="w-64 bg-[#0B1121] text-slate-300 flex flex-col shadow-2xl z-20 flex-shrink-0 transition-all duration-300 ease-in-out">
+
+        <!-- Logo Area -->
+        <div class="h-20 flex items-center px-5 border-b border-white/10 overflow-hidden">
+            <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="SBP Logo" id="sidebar-logo"
+                class="h-8 w-auto flex-shrink-0 mr-3 grayscale brightness-200 transition-all duration-300">
+            <span class="sidebar-text text-white font-bold text-lg tracking-wide whitespace-nowrap">Hire Assist
+                AI</span>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex-1 overflow-y-auto py-6 px-3 space-y-8 custom-scrollbar overflow-x-hidden">
+
+            <!-- Main Menu -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 whitespace-nowrap">
+                    Main Menu</p>
+                <nav class="space-y-1">
+                    <!-- <a href="{{ url_for('admin_home') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-house w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Overview</span>
+                    </a> -->
+                    <a href="{{ url_for('dashboard') if url_for else '/dashboard' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-chart-line w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('manage_users') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-users w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Manage Users</span>
+                    </a>
+                    <a href="{{ url_for('reports') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-file-invoice w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Reports</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Job Management -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 whitespace-nowrap">
+                    Job Management</p>
+                <nav class="space-y-1">
+                    <a href="{{ url_for('excel_upload') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-list-check w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Smart Shortlisting</span>
+                    </a>
+                    <!-- Create Job (Active) -->
+                    <a href="{{ url_for('create_job') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 bg-blue-600/10 text-blue-400 rounded-xl border-l-4 border-blue-500 transition-colors">
+                        <i class="fa-solid fa-folder-plus w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Create Job</span>
+                    </a>
+                    <a href="{{ url_for('job_descriptions') if url_for else '/job_descriptions' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-list w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">View All Jobs</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+        <!-- Top Header -->
+        <header
+            class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 sm:px-8 z-10 flex-shrink-0 shadow-sm">
+            <div class="flex items-center">
+                <button onclick="toggleSidebar()"
+                    class="mr-5 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-xl font-black text-slate-800 tracking-tight">Create Job Description</h1>
+            </div>
+
+            <!-- User Profile & Actions -->
+            <div class="flex items-center space-x-4 sm:space-x-6">
+                {% set display_name = session.get('username', session.get('user', 'Admin User')) %}
+                <div
+                    class="flex items-center bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm hidden sm:flex">
+                    <span class="text-sm font-bold text-slate-600 mr-2 capitalize">{{ display_name }}</span>
+                    <div
+                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200 uppercase">
+                        {{ display_name[0] }}
+                    </div>
+                </div>
+
+                <a href="{{ url_for('logout') if url_for else '/logout' }}"
+                    class="flex items-center text-rose-500 hover:text-rose-700 font-bold text-sm transition-colors px-3 py-2 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-100">
+                    <i class="fa-solid fa-arrow-right-from-bracket sm:mr-2"></i> <span
+                        class="hidden sm:inline">Logout</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Flash Messages Overlay -->
+        <div class="absolute top-24 left-0 w-full flex justify-center z-40 pointer-events-none" id="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div
+                class="mb-3 px-6 py-4 rounded-xl shadow-xl pointer-events-auto transform transition-all duration-500 alert-msg flex items-center {% if category == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% else %}bg-rose-50 border border-rose-200 text-rose-800{% endif %}">
+                <i
+                    class="fa-solid {% if category == 'success' %}fa-circle-check text-emerald-500{% else %}fa-circle-exclamation text-rose-500{% endif %} mr-3 text-xl"></i>
+                <span class="text-sm font-bold tracking-wide">{{ message }}</span>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Main Content -->
+        <main
+            class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-8 flex justify-center items-start custom-scrollbar">
+
+            <div class="w-full max-w-6xl bg-white rounded-2xl shadow-sm border border-slate-300 p-8 mb-8">
+
+                <form method="POST" id="jobForm">
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+
+                        <!-- LEFT PANEL: Core Inputs -->
+                        <div class="lg:col-span-5 flex flex-col space-y-5">
+
+                            <div class="grid grid-cols-2 gap-5">
+                                <div class="flex flex-col">
+                                    <label
+                                        class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Job
+                                        ID <span class="text-rose-500">*</span></label>
+                                    <input type="text" name="job_id" placeholder="e.g. PY001" required
+                                        class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors shadow-inner">
+                                </div>
+                                <div class="flex flex-col">
+                                    <label
+                                        class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Title
+                                        <span class="text-rose-500">*</span></label>
+                                    <input type="text" name="title" placeholder="e.g. Python Developer" required
+                                        class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors shadow-inner">
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col">
+                                <label
+                                    class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Experience
+                                    <span class="text-rose-500">*</span></label>
+                                <input type="text" name="experience" placeholder="e.g. 3+ years" required
+                                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors shadow-inner">
+                            </div>
+
+                            <div class="flex flex-col">
+                                <label
+                                    class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Key
+                                    Skills <span class="text-rose-500">*</span></label>
+                                <input type="text" name="skills" placeholder="e.g. AI, Python, SAP CAP" required
+                                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors shadow-inner">
+                            </div>
+
+                            <!-- NEW MANDATORY DYNAMIC ROUNDS CONFIGURATION -->
+                            <div class="flex flex-col mt-2">
+                                <div class="flex justify-between items-center mb-3">
+                                    <label
+                                        class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Interview
+                                        Rounds & Thresholds <span class="text-rose-500">*</span></label>
+                                    <button type="button" onclick="addRound()"
+                                        class="bg-blue-100 text-blue-700 hover:bg-blue-200 text-[11px] font-bold py-1.5 px-3 rounded flex items-center transition-colors shadow-sm">
+                                        <i class="fa-solid fa-plus mr-1"></i> Add Round
+                                    </button>
+                                </div>
+
+                                <!-- Hidden input to track total rounds for Flask backend -->
+                                <input type="hidden" name="total_rounds" id="total_rounds" value="1">
+
+                                <div id="roundsContainer" class="space-y-4">
+                                    <!-- Round 1 (Default - as it is) -->
+                                    <div class="round-row bg-white border border-slate-200 p-5 rounded-xl shadow-sm block relative"
+                                        id="round_1">
+                                        <label
+                                            class="round-title text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 block">ROUND
+                                            1</label>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
+                                            <!-- Pass -->
+                                            <div>
+                                                <label
+                                                    class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1 block">Pass
+                                                    % (&gt;=)</label>
+                                                <input type="number" name="pass_1" id="pass_1" value="50" required
+                                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors shadow-inner text-center">
+                                            </div>
+
+                                            <!-- Pending Range -->
+                                            <div>
+                                                <label
+                                                    class="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1 block text-center">Pending
+                                                    (%)</label>
+                                                <div class="flex items-center space-x-2">
+                                                    <input type="number" name="pending_min_1" id="pending_min_1"
+                                                        value="40" placeholder="Min" required
+                                                        class="w-full px-2 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors shadow-inner text-center">
+                                                    <span class="text-slate-400 font-bold flex-shrink-0">-</span>
+                                                    <input type="number" name="pending_max_1" id="pending_max_1"
+                                                        value="49" placeholder="Max" required
+                                                        class="w-full px-2 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors shadow-inner text-center">
+                                                </div>
+                                            </div>
+
+                                            <!-- Fail -->
+                                            <div>
+                                                <label
+                                                    class="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1 block text-right">Fail
+                                                    % (&lt;)</label>
+                                                <input type="number" name="fail_1" id="fail_1" value="40" required
+                                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors shadow-inner text-center">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accordion for Optional Fields -->
+                            <div
+                                class="mt-4 border border-slate-300 rounded-xl overflow-hidden bg-slate-50 transition-all shadow-sm">
+                                <div class="px-5 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
+                                    onclick="toggleAccordion()">
+                                    <span class="text-sm font-bold text-slate-700"><i
+                                            class="fa-solid fa-sliders mr-2 text-slate-400"></i> Additional Details
+                                        (Optional)</span>
+                                    <i id="arrow"
+                                        class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform duration-300"></i>
+                                </div>
+
+                                <div id="accordionBody"
+                                    class="hidden px-5 pb-5 pt-2 border-t border-slate-200 space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="flex flex-col">
+                                            <label
+                                                class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Interview
+                                                Time (Mins)</label>
+                                            <input type="number" name="interview_time" placeholder="e.g. 30"
+                                                class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <label
+                                                class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">No.
+                                                of Questions</label>
+                                            <input type="number" name="num_questions" placeholder="e.g. 10"
+                                                class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="flex flex-col">
+                                            <label
+                                                class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Location</label>
+                                            <input type="text" name="location" placeholder="e.g. Remote"
+                                                class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <label
+                                                class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Employment
+                                                Type</label>
+                                            <input type="text" name="employment_type" placeholder="e.g. Full Time"
+                                                class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <label
+                                            class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Budget
+                                            Range</label>
+                                        <input type="text" name="budget_range" placeholder="e.g. 6 LPA - 10 LPA"
+                                            class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <label
+                                            class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Certifications</label>
+                                        <input type="text" name="certifications" placeholder="e.g. AWS, Azure"
+                                            class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT PANEL: Textarea & Associated Actions -->
+                        <div class="lg:col-span-7 flex flex-col h-full">
+                            <div class="flex justify-between items-end mb-2">
+                                <label class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Job
+                                    Description Preview</label>
+                            </div>
+
+                            <textarea name="description" id="description"
+                                class="w-full flex-1 min-h-[300px] px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-colors text-sm font-medium text-slate-800 resize-y shadow-inner leading-relaxed"
+                                placeholder="Click 'Generate with AI' to auto-write the description based on the fields, or type it manually here..."></textarea>
+
+                            <!-- Sub-Actions specifically for the text area -->
+                            <div class="flex flex-wrap justify-end gap-3 mt-4">
+                                <button type="button"
+                                    class="ai-btn bg-slate-800 text-white hover:bg-slate-900 font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center justify-center text-xs"
+                                    onclick="generateDescription()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-slate-500 border-t-white rounded-full spinner hidden mr-2">
+                                    </div>
+                                    <span class="btn-icon mr-2"><i
+                                            class="fa-solid fa-wand-magic-sparkles text-purple-400"></i></span> Generate
+                                    with AI
+                                </button>
+
+                                <button type="button"
+                                    class="bg-[#0a66c2] text-white hover:bg-[#084e96] font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center justify-center text-xs"
+                                    onclick="openLinkedInModal()">
+                                    <i class="fa-brands fa-linkedin text-base mr-2"></i> Post to LinkedIn
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MAIN ACTION: Create Job Button (DISABLED BY DEFAULT) -->
+                    <div class="flex justify-end pt-6 mt-4 border-t border-slate-200">
+                        <button type="submit" id="createJobBtn" disabled
+                            class="bg-blue-600 text-white hover:bg-blue-700 font-bold py-3 px-10 rounded-xl shadow-md transform hover:-translate-y-0.5 transition-all flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:bg-blue-600">
+                            <i class="fa-solid fa-check mr-2"></i> Create Job
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- AI Loading Overlay -->
+    <div id="aiLoadingOverlay"
+        class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] flex-col items-center justify-center text-white">
+        <div class="w-12 h-12 border-4 border-slate-600 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+        <h3 class="text-xl font-bold tracking-wide">Generating Job Details with AI...</h3>
+        <p class="text-slate-300 mt-2 text-sm">Please wait, this might take a few seconds.</p>
+    </div>
+
+    <!-- LinkedIn Preview Modal -->
+    <div id="linkedinModal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden border border-slate-200">
+
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fa-brands fa-linkedin text-[#0a66c2] text-2xl mr-3"></i>
+                    <h3 class="text-lg font-black text-slate-800 tracking-tight">LinkedIn Post Preview</h3>
+                </div>
+                <button class="text-slate-400 hover:text-slate-700 transition-colors p-1" onclick="closeLinkedInModal()"
+                    title="Close">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6 bg-white relative group">
+                <textarea id="linkedinPost" readonly
+                    class="w-full min-h-[350px] px-5 py-4 border border-slate-300 rounded-xl bg-slate-50 text-sm font-medium text-slate-800 resize-none focus:outline-none shadow-inner leading-relaxed selection:bg-blue-200"></textarea>
+
+                <!-- Quick Copy icon floating in corner -->
+                <button onclick="copyLinkedInPost()"
+                    class="absolute top-8 right-8 p-2 bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-lg shadow-sm transition-all focus:outline-none opacity-0 group-hover:opacity-100"
+                    title="Copy to Clipboard">
+                    <i id="innerCopyIcon" class="fa-regular fa-copy text-lg"></i>
+                </button>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 text-right border-t border-slate-100">
+                <button onclick="copyLinkedInPost()"
+                    class="bg-[#0a66c2] text-white hover:bg-[#084e96] font-bold py-2.5 px-6 rounded-lg transition-colors text-sm shadow-md flex items-center inline-flex">
+                    <i id="mainCopyIcon" class="fa-regular fa-copy mr-2"></i> Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Toast -->
+    <div id="copyToast"
+        class="fixed bottom-8 right-8 bg-slate-800 text-white px-5 py-3 rounded-lg shadow-2xl flex items-center space-x-3 transform translate-y-24 opacity-0 transition-all duration-300 z-50 border border-slate-700">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span class="text-sm font-bold tracking-wide">Copied to Clipboard!</span>
+    </div>
+
+    <!-- UI & Logic Scripts -->
+    <script>
+        // Set Default Round 1 Pending Range
+        document.addEventListener('DOMContentLoaded', () => {
+            const r1Min = document.getElementById('pending_min_1');
+            const r1Max = document.getElementById('pending_max_1');
+            if (r1Min && r1Min.value === "") r1Min.value = 40;
+            if (r1Max && r1Max.value === "") r1Max.value = 49;
+        });
+
+        // Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const texts = document.querySelectorAll('.sidebar-text');
+            const logo = document.getElementById('sidebar-logo');
+
+            if (sidebar.classList.contains('w-64')) {
+                sidebar.classList.remove('w-64'); sidebar.classList.add('w-20', 'sidebar-collapsed'); logo.classList.remove('mr-3');
+            } else {
+                sidebar.classList.remove('w-20', 'sidebar-collapsed'); sidebar.classList.add('w-64'); setTimeout(() => logo.classList.add('mr-3'), 150);
+            }
+        }
+
+        // Accordion Toggle
+        function toggleAccordion() {
+            const body = document.getElementById("accordionBody");
+            const arrow = document.getElementById("arrow");
+
+            if (body.classList.contains("hidden")) {
+                body.classList.remove("hidden");
+                arrow.style.transform = "rotate(180deg)";
+            } else {
+                body.classList.add("hidden");
+                arrow.style.transform = "rotate(0deg)";
+            }
+        }
+
+        // --- Dynamic Rounds Logic ---
+        let currentRounds = 1;
+        // Keep track of active round IDs to submit correctly even if deleted
+        let activeRoundIds = [1];
+
+        // This function dynamically re-indexes the rounds so if one is deleted, 
+        // they reset sequentially.
+        function updateRoundIndices() {
+            const rounds = document.querySelectorAll('.round-row');
+
+            rounds.forEach((round, index) => {
+                const roundNum = index + 1;
+
+                // Update ID of container
+                round.id = `round_${roundNum}`;
+
+                // If it's Round 1 (static)
+                if (roundNum === 1) {
+                    const passInput = round.querySelector('input[name^="pass_"]');
+                    if (passInput) { passInput.name = `pass_${roundNum}`; passInput.id = `pass_${roundNum}`; }
+
+                    const pendingMin = round.querySelector('input[name^="pending_min_"]');
+                    if (pendingMin) { pendingMin.name = `pending_min_${roundNum}`; pendingMin.id = `pending_min_${roundNum}`; }
+
+                    const pendingMax = round.querySelector('input[name^="pending_max_"]');
+                    if (pendingMax) { pendingMax.name = `pending_max_${roundNum}`; pendingMax.id = `pending_max_${roundNum}`; }
+
+                    const failInput = round.querySelector('input[name^="fail_"]');
+                    if (failInput) { failInput.name = `fail_${roundNum}`; failInput.id = `fail_${roundNum}`; }
+                }
+                // If it's dynamic rounds (has name and marks fields)
+                else {
+                    const nameInput = round.querySelector('input[name^="round_name_"]');
+                    if (nameInput) { nameInput.name = `round_name_${roundNum}`; nameInput.id = `round_name_${roundNum}`; }
+
+                    const marksInput = round.querySelector('input[name^="marks_"]');
+                    if (marksInput) { marksInput.name = `marks_${roundNum}`; marksInput.id = `marks_${roundNum}`; }
+
+                    const removeBtn = round.querySelector('.remove-btn');
+                    if (removeBtn) {
+                        removeBtn.setAttribute('onclick', `removeRound(${roundNum})`);
+                    }
+                }
+            });
+
+            // Sync total_rounds hidden input with the visible count
+            document.getElementById("total_rounds").value = rounds.length;
+        }
+
+        function removeRound(roundId) {
+            const roundElement = document.getElementById(`round_${roundId}`);
+            if (roundElement) {
+                // Actually remove from DOM so we don't submit it
+                roundElement.remove();
+
+                // Re-index all remaining rounds so sequence is maintained
+                updateRoundIndices();
+            }
+        }
+
+        function addRound() {
+            const nextRound = document.querySelectorAll('.round-row').length + 1;
+            const container = document.getElementById("roundsContainer");
+
+            const newRoundHTML = `
+                <div class="round-row bg-white border border-slate-200 p-5 rounded-xl shadow-sm block relative" id="round_${nextRound}">
+                    
+                    <button type="button" onclick="removeRound(${nextRound})" class="remove-btn absolute top-4 right-4 text-rose-400 hover:text-rose-600 transition-colors p-1" title="Remove Round">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full pr-8">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Round Name</label>
+                            <input type="text" name="round_name_${nextRound}" id="round_name_${nextRound}" placeholder="e.g. Technical Interview" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                        </div>
+                        
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Marks</label>
+                            <input type="number" name="marks_${nextRound}" id="marks_${nextRound}" placeholder="e.g. 50" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', newRoundHTML);
+
+            // Re-index to be safe and update total count
+            updateRoundIndices();
+        }
+
+        // Clean up before form submit just to ensure we send the accurate total rounds count
+        document.getElementById("jobForm").addEventListener("submit", function () {
+            document.getElementById("total_rounds").value = document.querySelectorAll('.round-row').length;
+        });
+
+        // Flash Message Auto-Hide
+        setTimeout(function () {
+            const alerts = document.querySelectorAll('.alert-msg');
+            alerts.forEach(alert => {
+                alert.classList.add("opacity-0", "-translate-y-4");
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 3000);
+
+        // Generate AI Description
+        function generateDescription() {
+            const id = document.querySelector('input[name="job_id"]').value.trim();
+            const title = document.querySelector('input[name="title"]').value.trim();
+            const experience = document.querySelector('input[name="experience"]').value.trim();
+            const skills = document.querySelector('input[name="skills"]').value.trim();
+            const interviewTime = document.querySelector('input[name="interview_time"]').value.trim();
+            const numQuestions = document.querySelector('input[name="num_questions"]').value.trim();
+            const location = document.querySelector('input[name="location"]').value.trim();
+            const employmentType = document.querySelector('input[name="employment_type"]').value.trim();
+            const budgetRange = document.querySelector('input[name="budget_range"]').value.trim();
+            const certifications = document.querySelector('input[name="certifications"]').value.trim();
+            const textarea = document.getElementById("description");
+            const prompt = textarea.value.trim();
+            const createJobBtn = document.getElementById("createJobBtn");
+            const aiLoadingOverlay = document.getElementById("aiLoadingOverlay");
+
+            if (!id || !title || !experience || !skills) {
+                alert("Please fill all required fields (*) first.");
+                return;
+            }
+
+            // Show full screen overlay
+            aiLoadingOverlay.classList.remove('hidden');
+            aiLoadingOverlay.classList.add('flex');
+
+            fetch("/generate-description", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: id, title: title, experience: experience, skills: skills,
+                    interview_time: interviewTime, num_questions: numQuestions,
+                    location: location, employment_type: employmentType,
+                    budget_range: budgetRange, certifications: certifications, prompt: prompt
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.generated_text) {
+                        textarea.value = data.generated_text;
+                        // Enable the Create Job button on successful generation
+                        createJobBtn.disabled = false;
+                    } else {
+                        alert("AI returned an empty response.");
+                        createJobBtn.disabled = true;
+                    }
+                })
+                .catch(() => {
+                    alert("AI generation failed.");
+                    createJobBtn.disabled = true;
+                })
+                .finally(() => {
+                    // Hide overlay regardless of success or failure
+                    aiLoadingOverlay.classList.add('hidden');
+                    aiLoadingOverlay.classList.remove('flex');
+                });
+        }
+
+        // LinkedIn Modal Handling
+        function openLinkedInModal() {
+            const jobId = document.querySelector('input[name="job_id"]').value.trim();
+            const title = document.querySelector('input[name="title"]').value.trim();
+            const experience = document.querySelector('input[name="experience"]').value.trim();
+            const skills = document.querySelector('input[name="skills"]').value.trim();
+            let description = document.getElementById("description").value.trim();
+
+            description = description
+                .replace(/Optional Sections\s*:?\s*/gi, "")
+                .replace(/\(Include ONLY if provided in input\)\s*:?\s*/gi, "")
+                .replace(/Interview Time\s*:\s*\d+\s*minutes?/gi, "")
+                .replace(/Number of Questions\s*:\s*\d+/gi, "")
+                .replace(/Location\s*:\s*$/gim, "")
+                .replace(/Employment Type\s*:\s*$/gim, "")
+                .replace(/Budget Range\s*:\s*$/gim, "")
+                .replace(/Certifications\s*:\s*$/gim, "")
+                .replace(/\n\s*\n/g, "\n");
+
+            if (!jobId || !title || !experience || !skills || !description) {
+                alert("Please fill all required fields and generate a description first.");
+                return;
+            }
+
+            const linkedinText = `🚀 We're Hiring: ${title}\n\n📍 Experience Required: ${experience}\n\n🛠️ Key Skills:\n${skills.split(',').map(skill => `✔ ${skill.trim()}`).join('\n')}\n\n📄 Job Overview:\n${description.substring(0, 5000)}\n\n📩 Send your resume to: sbpagent@gmail.com\n📌 Mention Subject as Job Application: "${jobId}".\n\n📋 Candidate Details (MANDATORY FORMAT):\nPlease include the below details in your email:\n• Total Experience:\n• Relevant Experience:\n• Current Role:\n• Current Company:\n• Current CTC:\n• Expected CTC:\n• Notice Period:\n• Joining Date:\n• Education:\n\n💼 Apply now and be part of our growing team!\n\n#Hiring #${title.replace(/\s+/g, '')} #Careers #JobOpening`;
+
+            document.getElementById("linkedinPost").value = linkedinText;
+            document.getElementById("linkedinModal").classList.remove("hidden");
+            document.getElementById("linkedinModal").classList.add("flex");
+        }
+
+        function closeLinkedInModal() {
+            document.getElementById("linkedinModal").classList.add("hidden");
+            document.getElementById("linkedinModal").classList.remove("flex");
+        }
+
+        function copyLinkedInPost() {
+            const textarea = document.getElementById("linkedinPost");
+            const toast = document.getElementById("copyToast");
+            const mainIcon = document.getElementById("mainCopyIcon");
+            const innerIcon = document.getElementById("innerCopyIcon");
+
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                // UI Feedback
+                mainIcon.className = "fa-solid fa-check mr-2 text-emerald-300";
+                innerIcon.className = "fa-solid fa-check text-emerald-500 text-lg";
+
+                setTimeout(() => {
+                    mainIcon.className = "fa-regular fa-copy mr-2";
+                    innerIcon.className = "fa-regular fa-copy text-lg text-slate-500";
+                }, 2000);
+
+                // Show Toast
+                toast.classList.remove("translate-y-24", "opacity-0");
+                setTimeout(() => { toast.classList.add("translate-y-24", "opacity-0"); }, 2000);
+            }).catch(err => {
+                console.error("Copy failed", err);
+            });
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById("linkedinModal");
+            if (event.target === modal) {
+                closeLinkedInModal();
+            }
+        }
+    </script>
+</body>
+
+</html>

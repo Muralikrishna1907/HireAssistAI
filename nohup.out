@@ -1,0 +1,78 @@
+[2026-05-15 19:30:53 +0530] [7487] [INFO] Starting gunicorn 25.1.0
+[2026-05-15 19:30:53 +0530] [7487] [INFO] Listening at: https://0.0.0.0:8001 (7487)
+[2026-05-15 19:30:53 +0530] [7487] [INFO] Using worker: sync
+[2026-05-15 19:30:53 +0530] [7487] [INFO] Control socket listening at /home/sbp-ai/SBP_AI/WebApplications/Agent_SBP_Interview/gunicorn.ctl
+[2026-05-15 19:30:53 +0530] [7491] [INFO] Booting worker with pid: 7491
+[2026-05-15 19:30:53 +0530] [7503] [INFO] Booting worker with pid: 7503
+[2026-05-15 19:30:53 +0530] [7504] [INFO] Booting worker with pid: 7504
+/home/sbp-ai/miniconda3/lib/python3.13/site-packages/torch/cuda/__init__.py:180: UserWarning: CUDA initialization: The NVIDIA driver on your system is too old (found version 11040). Please update your GPU driver by downloading and installing a new version from the URL: http://www.nvidia.com/Download/index.aspx Alternatively, go to: https://pytorch.org to install a PyTorch version that has been compiled with your version of the CUDA driver. (Triggered internally at /pytorch/c10/cuda/CUDAFunctions.cpp:119.)
+  return torch._C._cuda_getDeviceCount() > 0
+/home/sbp-ai/miniconda3/lib/python3.13/site-packages/torch/cuda/__init__.py:180: UserWarning: CUDA initialization: The NVIDIA driver on your system is too old (found version 11040). Please update your GPU driver by downloading and installing a new version from the URL: http://www.nvidia.com/Download/index.aspx Alternatively, go to: https://pytorch.org to install a PyTorch version that has been compiled with your version of the CUDA driver. (Triggered internally at /pytorch/c10/cuda/CUDAFunctions.cpp:119.)
+  return torch._C._cuda_getDeviceCount() > 0
+/home/sbp-ai/miniconda3/lib/python3.13/site-packages/torch/cuda/__init__.py:180: UserWarning: CUDA initialization: The NVIDIA driver on your system is too old (found version 11040). Please update your GPU driver by downloading and installing a new version from the URL: http://www.nvidia.com/Download/index.aspx Alternatively, go to: https://pytorch.org to install a PyTorch version that has been compiled with your version of the CUDA driver. (Triggered internally at /pytorch/c10/cuda/CUDAFunctions.cpp:119.)
+  return torch._C._cuda_getDeviceCount() > 0
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+🔥 USING CONNECTION FILE: /home/sbp-ai/SBP_AI/WebApplications/Agent_SBP_Interview/db/connection.py
+🔥 DB_USER FROM ENV: sbp-ai
+🔥 USING CONNECTION FILE: /home/sbp-ai/SBP_AI/WebApplications/Agent_SBP_Interview/db/connection.py
+🔥 DB_USER FROM ENV: sbp-ai
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]🔥 USING CONNECTION FILE: /home/sbp-ai/SBP_AI/WebApplications/Agent_SBP_Interview/db/connection.py
+🔥 DB_USER FROM ENV: sbp-ai
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10408.20it/s]
+Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10715.41it/s]
+Loading weights: 100%|██████████| 103/103 [00:00<00:00, 9830.77it/s]
+[1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+[1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+[1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+[2026-05-15 19:31:01 +0530] [7487] [INFO] Handling signal: term
+[DEBUG] /home/sbp-ai/SBP_AI/WebApplications/Agent_SBP_Interview/db/cv_repository.py::<module>:642 - SentenceTransformer model loaded successfully
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 13640.23it/s]
+[DEBUG] /home/sbp-ai/SBP_AI/WebApplications/Agent_SBP_Interview/db/cv_repository.py::<module>:642 - SentenceTransformer model loaded successfully
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s][1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+Loading weights: 100%|██████████| 103/103 [00:00<00:00, 12873.63it/s]
+[1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+[DEBUG] /home/sbp-ai/SBP_AI/WebApplications/Agent_SBP_Interview/db/cv_repository.py::<module>:642 - SentenceTransformer model loaded successfully
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 15300.09it/s]
+[1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+[2026-05-15 19:31:05 +0530] [7504] [INFO] Worker exiting (pid: 7504)
+[2026-05-15 19:31:05 +0530] [7491] [INFO] Worker exiting (pid: 7491)
+[2026-05-15 19:31:05 +0530] [7503] [INFO] Worker exiting (pid: 7503)
+[2026-05-15 19:31:31 +0530] [7487] [INFO] Shutting down: Master

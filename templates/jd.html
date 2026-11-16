@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hire Assist AI - Job Descriptions</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Smooth transitions for sidebar text */
+        .sidebar-text {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .sidebar-collapsed .sidebar-text {
+            opacity: 0;
+            display: none;
+        }
+
+        .sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar-collapsed .nav-icon {
+            margin-right: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 flex h-screen font-sans antialiased text-slate-800 overflow-hidden selection:bg-blue-200">
+
+    <!-- Sidebar (Deep Navy for strong contrast) -->
+    <aside id="sidebar"
+        class="w-64 bg-[#0B1121] text-slate-300 flex flex-col shadow-2xl z-20 flex-shrink-0 transition-all duration-300 ease-in-out">
+
+        <!-- Logo Area -->
+        <div class="h-20 flex items-center px-5 border-b border-white/10 overflow-hidden">
+            <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="SBP Logo" id="sidebar-logo"
+                class="h-8 w-auto flex-shrink-0 mr-3 grayscale brightness-200 transition-all duration-300">
+            <span class="sidebar-text text-white font-bold text-lg tracking-wide whitespace-nowrap">Hire Assist
+                AI</span>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex-1 overflow-y-auto py-6 px-3 space-y-8 custom-scrollbar overflow-x-hidden">
+
+            <!-- Main Menu -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 whitespace-nowrap">
+                    Main Menu</p>
+                <nav class="space-y-1">
+                    <!-- <a href="{{ url_for('admin_home') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-house w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Overview</span>
+                    </a> -->
+                    <a href="{{ url_for('dashboard') if url_for else '/dashboard' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-chart-line w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('manage_users') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-users w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Manage Users</span>
+                    </a>
+                    <a href="{{ url_for('reports') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-file-invoice w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Reports</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Job Management -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 whitespace-nowrap">
+                    Job Management</p>
+                <nav class="space-y-1">
+                    <a href="{{ url_for('excel_upload') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-list-check w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Smart Shortlisting</span>
+                    </a>
+                    <a href="{{ url_for('create_job') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-square-plus w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Create Job</span>
+                    </a>
+                    <!-- View All Jobs (Active) -->
+                    <a href="#"
+                        class="nav-item flex items-center px-3 py-3 bg-blue-600/10 text-blue-400 rounded-xl border-l-4 border-blue-500 transition-colors">
+                        <i class="fa-solid fa-table-list w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">View All Jobs</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+        <!-- Top Header -->
+        <header
+            class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 sm:px-8 z-10 flex-shrink-0 shadow-sm">
+            <div class="flex items-center">
+                <button onclick="toggleSidebar()"
+                    class="mr-5 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-xl font-black text-slate-800 tracking-tight">Job Descriptions</h1>
+            </div>
+
+            <!-- User Profile & Actions -->
+            <div class="flex items-center space-x-4 sm:space-x-6">
+                {% set display_name = session.get('username', session.get('user', 'Admin User')) %}
+                <div
+                    class="flex items-center bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm hidden sm:flex">
+                    <span class="text-sm font-bold text-slate-600 mr-2 capitalize">{{ display_name }}</span>
+                    <div
+                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200 uppercase">
+                        {{ display_name[0] }}
+                    </div>
+                </div>
+
+                <a href="{{ url_for('logout') if url_for else '/logout' }}"
+                    class="flex items-center text-rose-500 hover:text-rose-700 font-bold text-sm transition-colors px-3 py-2 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-100">
+                    <i class="fa-solid fa-arrow-right-from-bracket sm:mr-2"></i> <span
+                        class="hidden sm:inline">Logout</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-8 flex flex-col custom-scrollbar">
+
+            <!-- Data Table Section -->
+            <div
+                class="bg-white rounded-2xl shadow-sm border border-slate-300 overflow-hidden flex flex-col flex-1 min-h-[500px]">
+
+                <div
+                    class="px-6 py-5 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
+                    <h3 class="text-lg font-black text-slate-800">Job Roster</h3>
+
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <div class="relative w-full sm:w-72">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-search text-slate-400"></i>
+                            </div>
+                            <input type="text" id="tableSearch" onkeyup="filterTableBySearch()"
+                                placeholder="Search jobs..."
+                                class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                        </div>
+                        <a href="{{ url_for('create_job') if url_for else '#' }}"
+                            class="bg-blue-600 text-white hover:bg-blue-700 font-bold py-2 px-5 rounded-lg shadow-md transition-all flex items-center justify-center text-sm whitespace-nowrap">
+                            <i class="fa-solid fa-plus mr-2"></i> New Job
+                        </a>
+                    </div>
+                </div>
+
+                <div class="overflow-y-auto overflow-x-auto custom-scrollbar flex-1 relative bg-white">
+                    <table class="min-w-full divide-y divide-slate-200" id="jobsTable">
+                        <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap w-24">
+                                    Job ID</th>
+                                <th scope="col"
+                                    class="px-6 py-4 text-left text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">
+                                    Job Title</th>
+                                <th scope="col"
+                                    class="px-6 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap w-24">
+                                    Applied</th>
+                                <th scope="col"
+                                    class="px-6 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap w-40">
+                                    Created</th>
+                                <th scope="col"
+                                    class="px-6 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap w-24">
+                                    Questions</th>
+                                <th scope="col"
+                                    class="px-6 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap w-24">
+                                    Time (mins)</th>
+                                <th scope="col"
+                                    class="px-6 py-4 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-widest whitespace-nowrap w-36">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100">
+                            {% for job in jobs %}
+                            <tr
+                                class="hover:bg-slate-50/80 transition-colors group {% if job.created_at %}bg-blue-50/10{% endif %} job-row">
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-center text-sm font-black font-mono text-slate-700">
+                                    {{ job.id }}</td>
+                                <td class="px-6 py-4 text-left text-sm font-bold text-slate-800">{{ job.title }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200">{{
+                                        job.applied_count if job.applied_count else 0 }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-xs font-medium text-slate-500">
+                                    {{ job.created_at.strftime('%d-%m-%Y %H:%M') if job.created_at else 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-black text-blue-600">{{
+                                    job.num_questions }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-slate-600">{{
+                                    job.interview_time }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <div class="flex justify-center space-x-2">
+                                        <button
+                                            class="bg-slate-100 border border-slate-200 text-slate-500 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-200 p-2 rounded-lg transition-colors shadow-sm"
+                                            onclick="openJDModal(`{{ job.description | escape }}`)"
+                                            title="View Job Description">
+                                            <i class="fa-solid fa-eye text-sm w-4"></i>
+                                        </button>
+                                        <button
+                                            class="bg-slate-100 border border-slate-200 text-slate-500 hover:bg-emerald-100 hover:text-emerald-700 hover:border-emerald-200 p-2 rounded-lg transition-colors shadow-sm"
+                                            onclick="openEditJDModal('{{ job.id }}', `{{ job.description | escape }}`)"
+                                            title="Edit Job Description">
+                                            <i class="fa-solid fa-pen text-sm w-4"></i>
+                                        </button>
+                                        <form method="POST" action="{{ url_for('delete_job') }}"
+                                            class="delete-form m-0 inline-block">
+                                            <input type="hidden" name="job_id" value="{{ job.id }}">
+                                            <button type="button"
+                                                class="bg-slate-100 border border-slate-200 text-slate-500 hover:bg-rose-100 hover:text-rose-700 hover:border-rose-200 p-2 rounded-lg transition-colors shadow-sm"
+                                                onclick="openModal(this)" title="Delete Job Description">
+                                                <i class="fa-solid fa-trash text-sm w-4"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="noJobsRow">
+                                <td colspan="7" class="px-6 py-16 text-center text-slate-500">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                                        <p class="text-sm font-medium">No job descriptions found. Create your first one!
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Confirmation Modal (Delete) -->
+    <div id="confirmModal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden border border-slate-200">
+            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex flex-col items-center text-center">
+                <div
+                    class="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center mb-4 border border-rose-200">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-black text-slate-800">Confirm Deletion</h3>
+            </div>
+            <div class="px-6 py-6 text-center bg-white">
+                <p class="text-slate-600 text-sm font-medium leading-relaxed">Are you sure you want to delete this job
+                    description? This action cannot be undone.</p>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 flex justify-center space-x-4 border-t border-slate-100">
+                <button onclick="closeModal()"
+                    class="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold py-2 px-4 rounded-lg transition-colors text-sm shadow-sm">
+                    Cancel
+                </button>
+                <button onclick="confirmDelete()"
+                    class="w-full bg-rose-600 text-white hover:bg-rose-700 font-bold py-2 px-4 rounded-lg shadow-md transition-colors text-sm flex items-center justify-center">
+                    <i class="fa-solid fa-trash mr-2"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW MODAL -->
+    <div id="jdModal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden border border-slate-200">
+
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <h3 class="text-lg font-black text-slate-800 flex items-center">
+                    <i class="fa-solid fa-file-lines text-blue-600 text-xl mr-3"></i> Job Description Details
+                </h3>
+                <button onclick="closeJDModal()" class="text-slate-400 hover:text-slate-700 transition-colors p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6 bg-white">
+                <div id="jdContent"
+                    class="w-full max-h-[50vh] overflow-y-auto px-5 py-4 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 whitespace-pre-wrap font-medium shadow-inner leading-relaxed custom-scrollbar">
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 text-right border-t border-slate-100">
+                <button onclick="closeJDModal()"
+                    class="bg-slate-800 text-white hover:bg-slate-900 font-bold py-2 px-8 rounded-lg transition-colors text-sm shadow-md">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT MODAL -->
+    <div id="editJDModal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+                <h3 class="text-lg font-black text-slate-800 flex items-center">
+                    <i class="fa-solid fa-pen-to-square text-emerald-600 text-xl mr-3"></i> Edit Job Description
+                </h3>
+                <button onclick="closeEditJDModal()" class="text-slate-400 hover:text-slate-700 transition-colors p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6 flex-1 flex flex-col bg-white">
+                <textarea id="editJDText"
+                    class="w-full flex-1 p-5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 focus:bg-white text-sm font-medium text-slate-800 resize-none shadow-inner leading-relaxed"></textarea>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 flex justify-end space-x-4 border-t border-slate-100 shrink-0">
+                <button onclick="closeEditJDModal()"
+                    class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold py-2.5 px-6 rounded-lg transition-colors text-sm shadow-sm">
+                    Cancel
+                </button>
+                <button onclick="saveJD()"
+                    class="bg-emerald-600 text-white hover:bg-emerald-700 font-bold py-2.5 px-8 rounded-lg shadow-md transition-colors text-sm flex items-center">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i> Save Changes
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- UI & Logic Scripts -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const texts = document.querySelectorAll('.sidebar-text');
+            const logo = document.getElementById('sidebar-logo');
+
+            if (sidebar.classList.contains('w-64')) {
+                sidebar.classList.remove('w-64'); sidebar.classList.add('w-20', 'sidebar-collapsed'); logo.classList.remove('mr-3');
+            } else {
+                sidebar.classList.remove('w-20', 'sidebar-collapsed'); sidebar.classList.add('w-64'); setTimeout(() => logo.classList.add('mr-3'), 150);
+            }
+        }
+
+        function filterTableBySearch() {
+            const input = document.getElementById("tableSearch");
+            const filter = input.value.toUpperCase();
+            const rows = document.querySelectorAll(".job-row");
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                if (row.innerText.toUpperCase().indexOf(filter) > -1) {
+                    row.style.display = ""; visibleCount++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            const noJobsRow = document.getElementById("noJobsRow");
+            if (noJobsRow) { noJobsRow.style.display = (visibleCount === 0 && rows.length > 0) ? "" : "none"; }
+        }
+
+        let currentForm = null;
+
+        function openModal(button) {
+            currentForm = button.closest("form");
+            document.getElementById("confirmModal").classList.remove("hidden");
+            document.getElementById("confirmModal").classList.add("flex");
+        }
+
+        function closeModal() {
+            document.getElementById("confirmModal").classList.add("hidden");
+            document.getElementById("confirmModal").classList.remove("flex");
+            currentForm = null;
+        }
+
+        function confirmDelete() {
+            if (currentForm) { currentForm.submit(); }
+        }
+
+        function openJDModal(description) {
+            document.getElementById("jdContent").innerText = description;
+            document.getElementById("jdModal").classList.remove("hidden");
+            document.getElementById("jdModal").classList.add("flex");
+        }
+
+        function closeJDModal() {
+            document.getElementById("jdModal").classList.add("hidden");
+            document.getElementById("jdModal").classList.remove("flex");
+        }
+
+        let currentJobId = null;
+
+        function openEditJDModal(jobId, description) {
+            currentJobId = jobId;
+            document.getElementById("editJDText").value = description;
+            document.getElementById("editJDModal").classList.remove("hidden");
+            document.getElementById("editJDModal").classList.add("flex");
+        }
+
+        function closeEditJDModal() {
+            document.getElementById("editJDModal").classList.add("hidden");
+            document.getElementById("editJDModal").classList.remove("flex");
+            currentJobId = null;
+        }
+
+        function saveJD() {
+            const updatedJD = document.getElementById("editJDText").value;
+            fetch("/update-job-description", {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: currentJobId, description: updatedJD })
+            }).then(res => res.json()).then(data => { alert("Job Description Updated Successfully!"); closeEditJDModal(); location.reload(); })
+                .catch(err => { console.error(err); alert("Failed to update Job Description."); });
+        }
+
+        window.onclick = function (event) {
+            const confirmModal = document.getElementById("confirmModal");
+            const jdModal = document.getElementById("jdModal");
+            const editJDModal = document.getElementById("editJDModal");
+            if (event.target === confirmModal) { closeModal(); }
+            if (event.target === jdModal) { closeJDModal(); }
+            if (event.target === editJDModal) { closeEditJDModal(); }
+        }
+    </script>
+</body>
+
+</html>
