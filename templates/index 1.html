@@ -50,12 +50,18 @@
             100% { transform: scale(1); }
         }
     </style>
+    <!-- Global font: Aptos (Body) -->
+    <style>
+        html, body, button, input, select, textarea, .font-sans, .font-mono {
+            font-family: Aptos, "Aptos Body", "Segoe UI", Calibri, Arial, sans-serif !important;
+        }
+    </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <span>TOPIC: {{ topic_name }}</span>
+        <span>Topic: {{ topic_name }}</span>
         <span>Question {{ index }} of {{ total }}</span>
     </div>
 

@@ -2,7 +2,6 @@ import base64
 import re
 import json
 import os
-import inspect
 from db.cv_repository import (
     is_email_processed,
     mark_email_processed,
@@ -10,35 +9,29 @@ from db.cv_repository import (
 )
 from datetime import datetime
 from db.connection import get_connection
-from utils.logger import debug_log, info_log, error_log, warning_log
-
-
-def debug_log(message):
-    frame = inspect.currentframe().f_back
-    filename = inspect.getframeinfo(frame).filename.split('\\')[-1]
-    function_name = frame.f_code.co_name
-    line_number = frame.f_lineno
-    print(f"[DEBUG] {filename}::{function_name}:{line_number} - {message}")
+from utils.logger import debug_log, info_log, error_log, warning_log, short
+from gmail.gmail_service import gmail_call
 
 
 # ✅ Extract JOB ID (Updated to check Subject and Body)
 def extract_job_id(subject, email_body=""):
-    debug_log(f"Starting extract_job_id - Raw Subject: {subject}")
-
     pattern = r'(?:JOB\s*ID[:\s]*)?([A-Z]{2,5}\d{2,5})'
 
     # 1. Check Subject First
     if subject:
         match = re.search(pattern, subject.upper())
         if match:
+            debug_log(f"Job ID {match.group(1)} found in subject: {short(subject, 120)}")
             return match.group(1)
 
     # 2. Check Email Body as a Fallback
     if email_body:
         match = re.search(pattern, email_body.upper())
         if match:
+            debug_log(f"Job ID {match.group(1)} found in email body (not in subject: {short(subject, 120)})")
             return match.group(1)
 
+    debug_log(f"No Job ID found in subject or body (subject: {short(subject, 120)})")
     return None
 
 
@@ -83,38 +76,44 @@ def extract_email_body(payload):
 
 # ✅ MAIN FUNCTION
 def fetch_job_application_emails(conn, service):
-    info_log("Starting fetch_job_application_emails")
-    
+    debug_log("Checking Gmail inbox for job application emails")
+
     # ✅ UPDATED QUERY: Fetch any email with a PDF attachment, bypassing strict subject requirements
-    results = service.users().messages().list(
-        userId="me",
-        labelIds=["INBOX"],
-        q='subject:"Job Application" OR (has:attachment filename:pdf)',
-        maxResults=10
-    ).execute()
+    with gmail_call("Gmail list inbox application messages"):
+        results = service.users().messages().list(
+            userId="me",
+            labelIds=["INBOX"],
+            # replies to our Smart Shortlisting invitations are applications too (even without a PDF,
+            # so the candidate gets the "please attach your CV" reply)
+            q='subject:"Job Application" OR subject:"Invitation to apply" OR (has:attachment filename:pdf)',
+            maxResults=10
+        ).execute()
 
     messages = results.get("messages", [])
     emails = []
 
     if not messages:
+        debug_log("No matching application emails in inbox")
         return emails
 
+    skipped = 0
     for msg_index, msg in enumerate(messages, start=1):
         msg_id = msg["id"]
-        debug_log(msg)
         if is_email_processed(conn, msg_id):
+            skipped += 1
             continue
 
         mail_read_time = datetime.now()
-        debug_log(msg_id)
-        print(msg_id, mail_read_time)
+        debug_log(f"Fetching new email {msg_index}/{len(messages)} msg_id={msg_id} "
+                  f"(thread {msg.get('threadId')}) at {mail_read_time}")
 
-        msg_data = service.users().messages().get(
-            userId="me",
-            id=msg_id,
-            format="full"
-        ).execute()
-        
+        with gmail_call(f"Gmail get message {msg_id}"):
+            msg_data = service.users().messages().get(
+                userId="me",
+                id=msg_id,
+                format="full"
+            ).execute()
+
         internal_ts = msg_data.get("internalDate")
         mail_received_time = datetime.fromtimestamp(int(internal_ts) / 1000)
 
@@ -122,12 +121,15 @@ def fetch_job_application_emails(conn, service):
 
         subject = None
         from_email = None
+        message_id_header = None
 
         for h in headers:
             if h["name"].lower() == "subject":
                 subject = h["value"]
             elif h["name"].lower() == "from":
                 from_email = h["value"]
+            elif h["name"].lower() == "message-id":
+                message_id_header = h["value"]
 
         # ✅ Clean email
         if from_email and "<" in from_email:
@@ -145,14 +147,10 @@ def fetch_job_application_emails(conn, service):
             if "data" in payload_body:
                 email_body = base64.urlsafe_b64decode(payload_body["data"]).decode("utf-8", errors="ignore")
 
-        print("EXTRACTED BODY:", email_body)
+        debug_log(f"Email body ({len(email_body or '')} chars): {short(email_body)}")
 
         # ✅ Now extract Job ID using BOTH Subject and Body
         job_id = extract_job_id(subject, email_body)
-
-        print("\nFrom   :", from_email)
-        print("Subject:", subject)
-        print("Job ID :", job_id)
 
         # ✅ PDF extraction (Updated to find all PDFs)
         def extract_pdfs(parts):
@@ -162,12 +160,14 @@ def fetch_job_application_emails(conn, service):
                 body = part.get("body", {})
 
                 if filename.lower().endswith(".pdf") and "attachmentId" in body:
-                    att = service.users().messages().attachments().get(
-                        userId="me",
-                        messageId=msg_id,
-                        id=body["attachmentId"]
-                    ).execute()
+                    with gmail_call(f"Gmail get attachment '{filename}' of message {msg_id}"):
+                        att = service.users().messages().attachments().get(
+                            userId="me",
+                            messageId=msg_id,
+                            id=body["attachmentId"]
+                        ).execute()
                     found_pdfs.append(base64.urlsafe_b64decode(att["data"]))
+                    debug_log(f"PDF attachment '{filename}' downloaded ({len(found_pdfs[-1])} bytes)")
 
                 if "parts" in part:
                     found_pdfs.extend(extract_pdfs(part["parts"]))
@@ -189,7 +189,11 @@ def fetch_job_application_emails(conn, service):
             "parsed_fields": candidate_details
         }
 
-        debug_log(f"Parsed body JSON: {mail_body_json}")
+        debug_log(f"Email msg_id={msg_id}: from={from_email}, subject={short(subject, 120)}, job_id={job_id}, "
+                  f"pdf attachments={len(all_pdfs)}, thread_id={msg_data.get('threadId')}, "
+                  f"parsed fields={[k for k, v in candidate_details.items() if v]}")
+        if has_multiple_pdfs:
+            warning_log(f"Email msg_id={msg_id} from {from_email} has {len(all_pdfs)} PDF attachments")
 
         emails.append({
             "msg_id": msg_id,
@@ -199,9 +203,14 @@ def fetch_job_application_emails(conn, service):
             "mail_body": mail_body_json,
             "internalDate": msg_data["internalDate"],
             "pdf": pdf_bytes,
-            "has_multiple_pdfs": has_multiple_pdfs  # ✅ Added multiple PDFs flag
+            "has_multiple_pdfs": has_multiple_pdfs,  # ✅ Added multiple PDFs flag
+            "thread_id": msg_data.get("threadId"),
+            "message_id_header": message_id_header,
         })
 
+    info_log(f"Inbox check: {len(messages)} application emails found, {skipped} already processed, "
+             f"{len(emails)} new fetched"
+             + (f" (job ids: {[e['job_id'] for e in emails]})" if emails else ""))
     return emails
 
 
@@ -215,73 +224,65 @@ def insert_mail_read_timestamp(conn, msg_id, mail_read_time):
     """
 
     cursor.execute(query, (msg_id, mail_read_time))
-    
+    debug_log(f"Mail read timestamp inserted for msg_id={msg_id} ({mail_read_time})")
 
-def fetch_webhook_submissions(service):
-    info_log("Starting fetch_webhook_submissions via Gmail API")
-    submissions = []
-    
-    try:
-        # Fetching emails from Inbox
-        results = service.users().messages().list(
-            userId="me",
-            labelIds=["INBOX"], 
-            q="subject:SYSTEM_WEBHOOK_SUBMISSION",
-            maxResults=10
-        ).execute()
 
-        messages = results.get('messages', [])
-        info_log(f"Gmail API returned {len(messages)} potential webhook emails.")
+def html_to_text(html):
+    text = re.sub(r"(?is)<(script|style).*?</\1>", " ", html or "")
+    text = re.sub(r"(?i)<br\s*/?>|</p>|</div>|</li>|</tr>", "\n", text)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = (text.replace("&nbsp;", " ").replace("&amp;", "&").replace("&lt;", "<")
+                .replace("&gt;", ">").replace("&#39;", "'").replace("&quot;", '"'))
+    return "\n".join(line.strip() for line in text.splitlines())
 
-        for msg in messages:
-            msg_id = msg['id']
-            debug_log(f"Fetching full payload for webhook email MSG_ID: {msg_id}")
-            
-            try:
-                message = service.users().messages().get(userId='me', id=msg_id, format='full').execute()
-                payload = message.get('payload', {})
-                headers = payload.get('headers', [])
-                
-                # Extract Subject
-                subject = next((header['value'] for header in headers if header['name'] == 'Subject'), "")
-                debug_log(f"Read Subject: '{subject}' from MSG_ID: {msg_id}")
-                
-                if "SYSTEM_WEBHOOK_SUBMISSION:" not in subject:
-                    warning_log(f"Subject '{subject}' does not match expected webhook format. Skipping.")
-                    continue
-                    
-                candidate_cv_id = subject.split(":")[1].strip()
-                debug_log(f"Successfully extracted Candidate CV ID: {candidate_cv_id}")
-                
-                # Extract Body
-                parts = payload.get('parts', [])
-                body_data = ""
-                if parts:
-                    for part in parts:
-                        if part.get('mimeType') == 'text/plain':
-                            body_data = part.get('body', {}).get('data', '')
-                            break
-                else:
-                    body_data = payload.get('body', {}).get('data', '')
 
-                if body_data:
-                    form_json_data = base64.urlsafe_b64decode(body_data).decode('utf-8')
-                    debug_log(f"Successfully decoded JSON payload for CV ID: {candidate_cv_id}")
-                    
-                    submissions.append({
-                        "candidate_cv_id": candidate_cv_id,
-                        "webhook_msg_id": msg_id,
-                        "form_data_json": form_json_data
-                    })
-                else:
-                    warning_log(f"No body data found in webhook email MSG_ID: {msg_id}")
+def strip_quoted_reply(text):
+    """Keep only what the candidate wrote, dropping the quoted earlier message."""
+    kept = []
+    for line in str(text or "").splitlines():
+        stripped = line.strip()
+        if re.match(r"^On .+wrote:\s*$", stripped) or re.match(r"^-{2,}\s*Original Message\s*-{2,}", stripped, re.I) \
+                or re.match(r"^From:\s.+", stripped) and kept:
+            break
+        if stripped.startswith(">"):
+            continue
+        kept.append(line)
+    return "\n".join(kept).strip()
 
-            except Exception as e:
-                error_log(f"Failed to parse individual webhook email {msg_id}: {str(e)}")
 
-        info_log(f"Successfully prepared {len(submissions)} webhooks for main pipeline.")
-        return submissions
+def fetch_thread_replies(service, thread_id, after_ms=0):
+    """Messages the candidate sent in a thread after `after_ms` (epoch ms), oldest first.
 
-    except Exception as e:
-        error_log(f"Fatal error fetching webhooks from Gmail: {str(e)}")
-        return []
+    Our own messages (label SENT) are skipped. Each item: msg_id, body (quoted text removed),
+    internal_date (ms), message_id_header, subject.
+    """
+    replies = []
+    with gmail_call(f"Gmail get thread {thread_id}"):
+        thread = service.users().threads().get(userId="me", id=thread_id, format="full").execute()
+    own, older = 0, 0
+    for message in thread.get("messages", []):
+        if "SENT" in message.get("labelIds", []):
+            own += 1
+            continue
+        internal = int(message.get("internalDate", "0"))
+        if internal <= after_ms:
+            older += 1
+            continue
+        payload = message.get("payload", {})
+        headers = {h["name"].lower(): h["value"] for h in payload.get("headers", [])}
+        body = extract_email_body(payload) or ""
+        if "<" in body and ">" in body and re.search(r"(?i)</?(html|div|p|br|span|table)\b", body):
+            body = html_to_text(body)
+        replies.append({
+            "msg_id": message["id"],
+            "body": strip_quoted_reply(body),
+            "internal_date": internal,
+            "message_id_header": headers.get("message-id"),
+            "subject": headers.get("subject"),
+            "from": (re.search(r"<(.+?)>", headers.get("from", "")) or re.search(r"(\S+@\S+)", headers.get("from", "")) or [None, None])[1],
+        })
+    replies.sort(key=lambda r: r["internal_date"])
+    debug_log(f"Thread {thread_id}: {len(thread.get('messages', []))} messages, {own} sent by us, "
+              f"{older} older than {after_ms}, {len(replies)} new candidate replies "
+              f"{[r['msg_id'] for r in replies]}")
+    return replies

@@ -4,80 +4,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review Responses</title>
+    <title>Review Responses - Online Assessment</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Solid Glass Effect */
-        .solid-glass {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        /* Soft blue page background (same as the assessment page) */
+        .exam-bg {
+            background-color: #eef3fb;
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(13, 110, 253, 0.10), transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.12), transparent 45%);
+            background-attachment: fixed;
+        }
+    </style>
+    <!-- Global font: Aptos (Body) -->
+    <style>
+        html, body, button, input, select, textarea, .font-sans, .font-mono {
+            font-family: Aptos, "Aptos Body", "Segoe UI", Calibri, Arial, sans-serif !important;
         }
     </style>
 </head>
 
-<body
-    class="bg-[linear-gradient(135deg,#172554,#1e3a8a,#2563eb)] min-h-screen flex flex-col font-sans antialiased text-white selection:bg-blue-400 relative">
+<body class="exam-bg min-h-screen flex flex-col font-sans antialiased text-slate-800 selection:bg-blue-200">
 
-    <!-- SBP Logo Watermark (Fixed position so it doesn't move when scrolling) -->
-    <div class="fixed inset-0 flex items-center justify-center pointer-events-none z-0">
-        <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="Watermark"
-            class="w-[80vw] md:w-[50vw] max-w-[800px] opacity-10 object-contain select-none">
+    <div class="sticky top-0 z-30">
+        {% set header_title = "Interview Responses" %}
+        {% include "_candidate_header.html" %}
     </div>
 
-    <!-- Sticky Frosted Header -->
-    <header
-        class="h-20 flex items-center justify-between px-6 sm:px-10 w-full z-50 sticky top-0 bg-black/10 backdrop-blur-md border-b border-white/20 shadow-lg">
-        <div class="flex items-center">
-            <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="Logo"
-                class="h-10 w-auto mr-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-            <h2
-                class="text-xl font-bold hidden sm:block drop-shadow-md border-l border-white/30 pl-4 ml-4 tracking-wide text-white">
-                Interview Responses</h2>
-        </div>
-        <button onclick="window.location.href='/thankyou'"
-            class="bg-black/30 hover:bg-black/50 border border-white/20 font-bold py-2.5 px-6 rounded-xl transition-colors flex items-center text-sm shadow-md tracking-wide">
-            <i class="fa-solid fa-arrow-left mr-2"></i> Back
-        </button>
-    </header>
+    {% set answered = responses | selectattr("answer") | list | length %}
 
     <!-- Main Content (Scrollable) -->
-    <main class="flex-1 w-full max-w-4xl mx-auto p-6 md:p-10 z-10 relative">
+    <main class="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 md:p-10">
 
-        <div class="mb-8">
-            <h1 class="text-3xl font-black mb-2 drop-shadow-lg tracking-tight">Review Your Answers</h1>
-            <p class="text-white/80 text-sm font-semibold tracking-wide">Below is a summary of the responses you
-                provided during the assessment.</p>
+        <!-- Summary banner -->
+        <div class="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1e3a8a,#172554)] text-white shadow-xl shadow-blue-900/20 p-6 md:p-8 mb-8">
+            <div class="absolute -top-12 -right-10 w-48 h-48 rounded-full bg-white/5"></div>
+            <div class="absolute -bottom-16 right-24 w-40 h-40 rounded-full bg-blue-400/10"></div>
+
+            <div class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight">Review Your Answers</h1>
+                    <p class="text-blue-100 text-sm font-semibold mt-1.5">A summary of the responses you provided during the assessment.</p>
+                </div>
+                <button onclick="window.location.href='/thankyou'"
+                    class="self-start sm:self-auto bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold py-2.5 px-5 rounded-xl transition-colors flex items-center text-sm">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Back
+                </button>
+            </div>
+
+            <div class="relative grid grid-cols-3 gap-3 mt-6">
+                <div class="rounded-xl bg-white/10 border border-white/10 px-4 py-3">
+                    <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Questions</p>
+                    <p class="text-2xl font-black mt-0.5">{{ responses | length }}</p>
+                </div>
+                <div class="rounded-xl bg-white/10 border border-white/10 px-4 py-3">
+                    <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Answered</p>
+                    <p class="text-2xl font-black mt-0.5 text-emerald-300">{{ answered }}</p>
+                </div>
+                <div class="rounded-xl bg-white/10 border border-white/10 px-4 py-3">
+                    <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Skipped</p>
+                    <p class="text-2xl font-black mt-0.5 text-amber-300">{{ (responses | length) - answered }}</p>
+                </div>
+            </div>
         </div>
 
-        <div class="space-y-6 pb-12">
+        <div class="space-y-5 pb-12">
             {% for item in responses %}
             <!-- Individual Question Card -->
-            <div class="solid-glass p-6 md:p-8 rounded-2xl relative overflow-hidden">
-                <div class="flex items-start mb-5">
-                    <span
-                        class="flex-shrink-0 w-8 h-8 rounded-full bg-white text-blue-900 font-black mr-4 mt-1 flex items-center justify-center shadow-md border border-blue-200">{{
-                        loop.index }}</span>
-                    <h3 class="text-lg md:text-xl font-bold leading-snug text-white drop-shadow-sm">{{ item.question }}
-                    </h3>
+            <div class="bg-white border border-blue-100 shadow-lg shadow-blue-900/5 rounded-2xl overflow-hidden">
+                <div class="flex items-start gap-4 px-6 md:px-8 py-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+                    <span class="flex-shrink-0 w-9 h-9 rounded-xl bg-[#0d6efd] text-white font-black flex items-center justify-center shadow-md shadow-blue-600/30">{{ loop.index }}</span>
+                    <h3 class="flex-1 text-base md:text-lg font-bold leading-snug text-slate-800 mt-1">{{ item.question }}</h3>
+                    {% if item.answer %}
+                    <span class="hidden sm:inline-flex shrink-0 items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full mt-1">
+                        <i class="fa-solid fa-check"></i> Answered
+                    </span>
+                    {% else %}
+                    <span class="hidden sm:inline-flex shrink-0 items-center gap-1.5 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full mt-1">
+                        <i class="fa-solid fa-minus"></i> Not answered
+                    </span>
+                    {% endif %}
                 </div>
 
-                <!-- Answer Box -->
-                <div class="bg-black/30 rounded-xl p-5 border border-white/20 ml-0 md:ml-12 shadow-inner">
-                    <p class="text-[11px] font-extrabold text-white/60 uppercase tracking-widest mb-3">Your Answer</p>
-                    <p class="text-white/95 text-base leading-relaxed whitespace-pre-wrap font-medium tracking-wide">{{
-                        item.answer or "No Answer Given" }}</p>
+                <!-- Answer -->
+                <div class="px-6 md:px-8 py-5">
+                    <p class="text-[11px] font-extrabold text-[#0d6efd] uppercase tracking-widest mb-2 flex items-center">
+                        <i class="fa-solid fa-pen-to-square mr-1.5"></i> Your Answer
+                    </p>
+                    {% if item.answer %}
+                    <p class="text-slate-700 text-base leading-relaxed whitespace-pre-wrap font-medium border-l-4 border-blue-200 pl-4">{{ item.answer }}</p>
+                    {% else %}
+                    <p class="text-slate-400 text-base italic font-medium border-l-4 border-slate-200 pl-4">No answer given</p>
+                    {% endif %}
                 </div>
             </div>
             {% else %}
             <!-- Empty State -->
-            <div class="solid-glass p-12 rounded-2xl text-center">
-                <i class="fa-solid fa-folder-open text-5xl text-white/40 mb-4 drop-shadow-sm"></i>
-                <p class="font-bold text-lg text-white/80 tracking-wide">No responses recorded.</p>
+            <div class="bg-white border border-blue-100 shadow-lg shadow-blue-900/5 p-12 rounded-2xl text-center">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 text-blue-300 flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-folder-open text-3xl"></i>
+                </div>
+                <p class="font-bold text-lg text-slate-500">No responses recorded.</p>
             </div>
             {% endfor %}
         </div>

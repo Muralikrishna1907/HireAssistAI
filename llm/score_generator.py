@@ -200,27 +200,19 @@
 #---------------------------------------------
 import requests
 from db.connection import get_connection
-import inspect
+
+from utils.logger import debug_log, info_log, warning_log, error_log, log_duration, short
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "gpt-oss:120b-cloud"
 # MODEL_NAME = "gemma3:4b"
 
-def debug_log(message):
-    frame = inspect.currentframe().f_back
-    filename = inspect.getframeinfo(frame).filename.split('\\')[-1]
-    function_name = frame.f_code.co_name
-    line_number = frame.f_lineno
-    print(f"[DEBUG] {filename}::{function_name}:{line_number} - {message}")
-
 def score_with_llm(question, answer):
-    debug_log(f"Starting score_with_llm - Question length: {len(question)} characters, Answer length: {len(answer) if answer else 0} characters")
-    
+    debug_log(f"Starting answer scoring - Question length: {len(question)} chars, Answer length: {len(answer) if answer else 0} chars")
+
     if not answer or not answer.strip():
-        debug_log("Answer is empty or None - returning score 0")
+        info_log("Answer is empty - technical score 0 (LLM not called)")
         return 0
-    
-    debug_log(f"Answer validation passed - Trimmed answer length: {len(answer.strip())} characters")
 
     payload = {
         "model": MODEL_NAME,
@@ -237,53 +229,50 @@ def score_with_llm(question, answer):
         """,
         "stream": False
     }
-    debug_log(f"Request payload prepared - Model: {MODEL_NAME}, Stream: False")
+    debug_log(f"Scoring request - Model: {MODEL_NAME}, Prompt length: {len(payload['prompt'])} chars, Timeout: 60s")
 
     try:
-        debug_log(f"Sending request to Ollama API - URL: {OLLAMA_URL}, Timeout: 60s")
-        response = requests.post(OLLAMA_URL, json=payload, timeout=60)
-        debug_log(f"Ollama API response received - Status Code: {response.status_code}")
-        
+        with log_duration(f"LLM answer scoring ({MODEL_NAME})", level="DEBUG"):
+            response = requests.post(OLLAMA_URL, json=payload, timeout=60)
+        debug_log(f"Ollama response status: {response.status_code}")
+
         response.raise_for_status()
-        debug_log("Response validation passed - Status code indicates success")
 
         data = response.json()
-        debug_log("Response JSON parsed successfully")
-        
+
         score_text = data.get("response", "").strip()
-        debug_log(f"Score text extracted from response: '{score_text}'")
+        debug_log(f"LLM score output: '{short(score_text, 100)}'")
 
         score = int(score_text)
-        debug_log(f"Score converted to integer: {score}")
-        
+
         if score < 0 or score > 5:
-            debug_log(f"Score {score} out of valid range [0-5] - clamping to 1")
+            warning_log(f"LLM score {score} is outside 0-5 - using 1")
             score = 1
-        
-        debug_log(f"Final score: {score}")
+
+        info_log(f"Technical answer score: {score}/5")
         return score
 
     except ValueError as e:
-        debug_log(f"ValueError: Could not convert '{score_text}' to integer - Error: {str(e)}, Using default score: 1")
+        warning_log(f"LLM score output is not an integer ('{short(score_text, 100)}') - using default score 1: {e}")
         return 1
-    
+
     except requests.exceptions.Timeout as e:
-        debug_log(f"Timeout Error: Ollama API did not respond within 60s - Error: {str(e)}")
+        error_log(f"Ollama scoring timed out after 60s ({MODEL_NAME}) - score 0: {e}")
         return 0
-    
+
     except requests.exceptions.RequestException as e:
-        debug_log(f"Request Error: Failed to connect to Ollama API - Error: {str(e)}")
+        error_log(f"Ollama scoring request failed ({MODEL_NAME}) - score 0: {e}")
         return 0
-    
+
     except Exception as e:
-        debug_log(f"Unexpected Error during LLM scoring - Error: {str(e)}, Type: {type(e).__name__}")
+        error_log(f"Unexpected error during LLM scoring ({type(e).__name__}) - score 0: {e}")
         return 0
-    
+
 def score_communication_with_llm(question, answer):
-    debug_log("Starting communication scoring")
+    debug_log(f"Starting communication scoring - Answer length: {len(answer) if answer else 0} chars")
 
     if not answer or not answer.strip():
-        debug_log("Empty answer → communication score = 0")
+        info_log("Answer is empty - communication score 0 (LLM not called)")
         return 0
 
     payload = {
@@ -309,22 +298,30 @@ def score_communication_with_llm(question, answer):
         "stream": False
     }
 
+    debug_log(f"Communication scoring request - Model: {MODEL_NAME}, Prompt length: {len(payload['prompt'])} chars, Timeout: 60s")
+
     try:
-        response = requests.post(OLLAMA_URL, json=payload, timeout=60)
+        with log_duration(f"LLM communication scoring ({MODEL_NAME})", level="DEBUG"):
+            response = requests.post(OLLAMA_URL, json=payload, timeout=60)
+        debug_log(f"Ollama response status: {response.status_code}")
         response.raise_for_status()
 
         data = response.json()
         score_text = data.get("response", "").strip()
+        debug_log(f"LLM communication score output: '{short(score_text, 100)}'")
 
         score = int(score_text)
 
         if score < 0 or score > 5:
-            debug_log(f"Invalid communication score {score}, setting to 1")
+            warning_log(f"LLM communication score {score} is outside 0-5 - using 1")
             score = 1
 
-        debug_log(f"Communication score: {score}")
+        info_log(f"Communication score: {score}/5")
         return score
 
+    except ValueError as e:
+        warning_log(f"Communication score output is not an integer - score 0: {e}")
+        return 0
     except Exception as e:
-        debug_log(f"Communication scoring failed: {str(e)}")
+        error_log(f"Communication scoring failed ({MODEL_NAME}) - score 0: {e}")
         return 0

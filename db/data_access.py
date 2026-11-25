@@ -22,18 +22,12 @@
 
 #---------------------------------------
 from db.connection import get_connection
-import inspect
+from utils.logger import debug_log, warning_log
 
-def debug_log(message):
-    frame = inspect.currentframe().f_back
-    filename = inspect.getframeinfo(frame).filename.split('\\')[-1]
-    function_name = frame.f_code.co_name
-    line_number = frame.f_lineno
-    print(f"[DEBUG] {filename}::{function_name}:{line_number} - {message}")
 
 def get_candidate_attachment(candidate_id):
-    debug_log(f"Starting get_candidate_attachment - Candidate_ID: {candidate_id}")
-    
+    debug_log(f"Fetching CV attachment for candidate_id={candidate_id}")
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -41,21 +35,18 @@ def get_candidate_attachment(candidate_id):
         "SELECT ATTACHMENT FROM CV_INFO WHERE ID = %s",
         (candidate_id,)
     )
-    debug_log(f"Database query executed for Candidate_ID: {candidate_id}")
 
     row = cursor.fetchone()
-    debug_log(f"Row fetched - Found: {row is not None}")
-    
+
     cursor.close()
     conn.close()
-    debug_log("Database connection closed")
 
     if not row or not row[0]:
-        debug_log(f"No attachment found for Candidate_ID: {candidate_id}")
+        warning_log(f"No CV attachment found for candidate_id={candidate_id} (row found: {row is not None})")
         return None
 
-    debug_log(f"Attachment retrieved successfully - Data size: {len(row[0])} bytes")
-    
+    debug_log(f"CV attachment retrieved for candidate_id={candidate_id} - {len(row[0])} bytes")
+
     return {
         "data": row[0]   # memoryview (expected)
     }

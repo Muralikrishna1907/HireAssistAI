@@ -25,3 +25,5 @@ faiss-cpu
 pdfplumber 
 mysql-connector-python
 openpyxl
+tzdata
+Pillow

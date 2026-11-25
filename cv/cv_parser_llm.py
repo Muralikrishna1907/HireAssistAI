@@ -2,20 +2,13 @@
 
 import requests
 import json
-import inspect
 import re
+
+from utils.logger import debug_log, info_log, warning_log, error_log, log_duration, short, mask_email
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "gpt-oss:120b-cloud"
 # MODEL = "gemma3:4b"
-
-
-def debug_log(message):
-    frame = inspect.currentframe().f_back
-    filename = inspect.getframeinfo(frame).filename.split('\\')[-1]
-    function_name = frame.f_code.co_name
-    line_number = frame.f_lineno
-    print(f"[DEBUG] {filename}::{function_name}:{line_number} - {message}")
 
 
 def clean_llm_output(output: str) -> str:
@@ -57,7 +50,9 @@ def normalize_parsed_data(parsed: dict) -> dict:
 
 
 def parse_cv_with_llm(cv_text: str):
-    debug_log(f"Parsing CV with LLM - Length: {len(cv_text)}")
+    debug_log(f"Parsing CV with LLM - CV text length: {len(cv_text)} chars")
+    if not cv_text.strip():
+        warning_log("CV text is empty - LLM parsing will have nothing to work with")
 
     prompt = f"""
 Extract structured data from the CV.
@@ -101,12 +96,18 @@ CV:
         "temperature": 0
     }
 
+    debug_log(f"CV parse request - Model: {MODEL}, Prompt length: {len(prompt)} chars")
+
     try:
-        response = requests.post(OLLAMA_URL, json=payload, timeout=120)
+        with log_duration(f"LLM CV parsing ({MODEL})"):
+            response = requests.post(OLLAMA_URL, json=payload, timeout=120)
+        debug_log(f"Ollama response status: {response.status_code}")
         response.raise_for_status()
 
         output = response.json().get("response", "").strip()
-        debug_log(f"LLM raw output: {output[:200]}")
+        debug_log(f"LLM raw output: {short(output)}")
+        if not output:
+            warning_log("LLM returned an empty response for CV parsing")
 
         # Clean output
         output = clean_llm_output(output)
@@ -116,11 +117,20 @@ CV:
         # Normalize
         parsed = normalize_parsed_data(parsed)
 
-        debug_log("LLM parsing successful")
+        info_log(f"CV parsed by LLM - name found: {bool(parsed.get('name'))}, "
+                 f"email: {mask_email(parsed.get('email')) or 'not found'}, phone found: {bool(parsed.get('phone'))}, "
+                 f"skills: {len(parsed.get('skills') or [])}, experience: {parsed.get('total_experience')}, "
+                 f"education entries: {len(parsed.get('education') or [])}")
         return parsed
 
+    except json.JSONDecodeError as e:
+        warning_log(f"LLM CV output is not valid JSON ({e}); falling back to regex parser")
+        return fallback_parser(cv_text)
+    except requests.exceptions.RequestException as e:
+        error_log(f"Ollama request for CV parsing failed ({MODEL}): {e}; falling back to regex parser")
+        return fallback_parser(cv_text)
     except Exception as e:
-        debug_log(f"LLM parsing failed: {str(e)}")
+        error_log(f"LLM CV parsing failed: {e}; falling back to regex parser")
         return fallback_parser(cv_text)
 
 
@@ -149,7 +159,7 @@ def fallback_parser(text):
             "year": None
         })
 
-    return {
+    result = {
         "name": text.split("\n")[0] if text else None,
         "email": email.group() if email else None,
         "phone": phone.group() if phone else None,
@@ -157,6 +167,10 @@ def fallback_parser(text):
         "total_experience": 0,
         "education": education
     }
+    warning_log(f"Regex fallback parser used - name found: {bool(result['name'])}, "
+                f"email: {mask_email(result['email']) or 'not found'}, phone found: {bool(result['phone'])}, "
+                f"education entries: {len(education)} (skills and experience are not extracted)")
+    return result
 
 
 # -------------------------------

@@ -197,29 +197,24 @@
 from sentence_transformers import util
 from db.cv_repository import get_all_job_embeddings, generate_missing_job_embeddings, get_job_by_id
 from config import MATCH_THRESHOLD
-import inspect
-
-def debug_log(message):
-    frame = inspect.currentframe().f_back
-    filename = inspect.getframeinfo(frame).filename.split('\\')[-1]
-    function_name = frame.f_code.co_name
-    line_number = frame.f_lineno
-    print(f"[DEBUG] {filename}::{function_name}:{line_number} - {message}")
+from utils.logger import debug_log, info_log, warning_log, log_duration
 
 
 # ---------------------------------------------------
 # BEST JOB MATCH (EMBEDDING ONLY)
 # ---------------------------------------------------
 def match_cv_to_best_job(model, cv_text, conn):
-    debug_log(f"Starting match_cv_to_best_job - CV text length: {len(cv_text)} characters")
+    debug_log(f"Starting match_cv_to_best_job - CV text length: {len(cv_text)} chars")
     
-    generate_missing_job_embeddings(model, conn)
+    with log_duration("Missing job embeddings generation", level="DEBUG"):
+        generate_missing_job_embeddings(model, conn)
     
-    cv_embedding = model.encode(cv_text, convert_to_tensor=True)
-    debug_log(f"CV embedding generated - Shape: {cv_embedding.shape}")
+    with log_duration("CV embedding", level="DEBUG"):
+        cv_embedding = model.encode(cv_text, convert_to_tensor=True)
+    debug_log(f"CV embedding generated - Shape: {tuple(cv_embedding.shape)}")
     
     jobs = get_all_job_embeddings(conn)
-    debug_log(f"Retrieved {len(jobs)} jobs from database")
+    debug_log(f"Retrieved {len(jobs)} job embeddings from database")
     
     best_score = -1
     best_job_title = None
@@ -234,10 +229,11 @@ def match_cv_to_best_job(model, cv_text, conn):
             best_job_description = job["description"]
     
     if best_job_title is None:
+        warning_log(f"No jobs to match against ({len(jobs)} job embeddings found) - returning score 0.0")
         return None, None, 0.0
     
     final_score = round(best_score, 4)
-    debug_log(f"Best Job: {best_job_title}, Score: {final_score}")
+    info_log(f"Best job match: '{best_job_title}' - Score: {final_score} (out of {len(jobs)} jobs)")
     
     return best_job_title, best_job_description, final_score
 
@@ -246,25 +242,27 @@ def match_cv_to_best_job(model, cv_text, conn):
 # SPECIFIC JOB MATCH (EMBEDDING ONLY)
 # ---------------------------------------------------
 def match_cv_to_specific_job(model, cv_text, job_id, conn, cv_data):
-    debug_log(f"Starting match_cv_to_specific_job - Job_ID: {job_id}")
+    debug_log(f"Starting match_cv_to_specific_job - Job ID: {job_id}, CV text length: {len(cv_text)} chars")
 
-    generate_missing_job_embeddings(model, conn)
+    with log_duration("Missing job embeddings generation", level="DEBUG"):
+        generate_missing_job_embeddings(model, conn)
 
     job = get_job_by_id(conn, job_id)
 
     if not job:
-        debug_log(f"Job not found for Job_ID: {job_id}")
+        warning_log(f"Job ID {job_id} not found in the database - returning score 0.0")
         return None, None, 0.0
 
-    cv_embedding = model.encode(cv_text, convert_to_tensor=True)
+    with log_duration(f"CV embedding for job {job_id}", level="DEBUG"):
+        cv_embedding = model.encode(cv_text, convert_to_tensor=True)
 
     # 🔥 ONLY EMBEDDING SCORE
     score = util.cos_sim(cv_embedding, job["embedding"]).item()
 
     final_score = round(score, 4)
 
-    debug_log(f"Embedding Score: {final_score}")
-    debug_log(f"match_cv_to_specific_job completed - Job Title: {job['title']}")
+    info_log(f"CV matched to job {job_id} ('{job['title']}') - Embedding score: {final_score} "
+             f"(threshold {MATCH_THRESHOLD})")
 
     return job["title"], job["description"], final_score
 
@@ -273,11 +271,13 @@ def match_cv_to_specific_job(model, cv_text, job_id, conn, cv_data):
 # OTHER JOB MATCH (EMBEDDING ONLY)
 # ---------------------------------------------------
 def match_cv_to_other_jobs(model, cv_text, exclude_job_id, conn):
-    debug_log(f"Starting match_cv_to_other_jobs - Excluding Job_ID: {exclude_job_id}")
+    debug_log(f"Starting match_cv_to_other_jobs - Excluding Job ID: {exclude_job_id}, CV text length: {len(cv_text)} chars")
     
-    cv_embedding = model.encode(cv_text, convert_to_tensor=True)
+    with log_duration("CV embedding for other-job matching", level="DEBUG"):
+        cv_embedding = model.encode(cv_text, convert_to_tensor=True)
     
     jobs = get_all_job_embeddings(conn)
+    debug_log(f"Retrieved {len(jobs)} job embeddings from database")
     
     matched_jobs = []
 
@@ -286,6 +286,7 @@ def match_cv_to_other_jobs(model, cv_text, exclude_job_id, conn):
             continue
         
         score = util.cos_sim(cv_embedding, job["embedding"]).item()
+        debug_log(f"Job {job['id']} similarity: {score:.4f}")
 
         if score >= MATCH_THRESHOLD:
             matched_jobs.append({
@@ -294,6 +295,7 @@ def match_cv_to_other_jobs(model, cv_text, exclude_job_id, conn):
                 "score": round(score, 4)
             })
     
-    debug_log(f"Other matches found: {len(matched_jobs)}")
+    info_log(f"Other job matches above threshold {MATCH_THRESHOLD}: {len(matched_jobs)} "
+             f"{[(j['id'], j['score']) for j in matched_jobs]}")
 
     return matched_jobs

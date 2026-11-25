@@ -1,22 +1,14 @@
 import requests
 import re
-import inspect
+
+from utils.logger import debug_log, info_log, warning_log, error_log, log_duration, short
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 MODEL = "gpt-oss:120b-cloud"
 # MODEL = "gemma3:4b"
 
-def debug_log(message):
-    frame = inspect.currentframe().f_back
-    filename = inspect.getframeinfo(frame).filename.split('\\')[-1]
-    function_name = frame.f_code.co_name
-    line_number = frame.f_lineno
-    print(f"[DEBUG] {filename}::{function_name}:{line_number} - {message}")
-
 def detect_programming_language(questions):
-    debug_log("Starting detect_programming_language")
-
     language_keywords = {
         "Python": ["python", "django", "flask", "fastapi"],
         "SAP CAP": ["sap", "cap", "odata", "btp", "cds"],
@@ -35,9 +27,10 @@ def detect_programming_language(questions):
                 if kw in text:
                     score[lang] = score.get(lang, 0) + 1
 
-    debug_log(f"Language scores: {score}")
+    debug_log(f"Language keyword scores: {score}")
 
     if not score:
+        debug_log("No language keywords found in the questions - using 'General'")
         return "General"
 
     prog_lang = max(score, key=score.get)
@@ -47,7 +40,10 @@ def detect_programming_language(questions):
     return prog_lang
 
 def generate_interview_questions(cv_text: str, jd_text: str, num_questions: int):
-    debug_log(f"Starting generate_interview_questions - CV Length: {len(cv_text)} characters, JD Length: {len(jd_text)} characters")
+    debug_log(f"Starting question generation - CV length: {len(cv_text)} chars, JD length: {len(jd_text)} chars, "
+              f"Questions requested: {num_questions}")
+    if not jd_text:
+        warning_log("Job description text is empty - questions will be based on the CV only")
 
 #     prompt = f"""
 
@@ -134,7 +130,6 @@ def generate_interview_questions(cv_text: str, jd_text: str, num_questions: int)
     CANDIDATE CV:
     {cv_text}
     """
-    debug_log(f"Prompt constructed - Total length: {len(prompt)} characters, CV excerpt: {len(cv_text[:1500])} chars, JD excerpt: {len(jd_text[:1000])} chars")
 
     payload = {
         "model": MODEL,
@@ -142,24 +137,24 @@ def generate_interview_questions(cv_text: str, jd_text: str, num_questions: int)
         "stream": False,
         "temperature": 0   # 🔥 makes output more consistent
     }
-    debug_log(f"Request payload prepared - Model: {MODEL}, Temperature: 0, Stream: False")
+    debug_log(f"Question generation request - Model: {MODEL}, Prompt length: {len(prompt)} chars, Timeout: 300s")
 
-    debug_log(f"Sending request to Ollama API - URL: {OLLAMA_URL}, Timeout: 300s")
-    response = requests.post(OLLAMA_URL, json=payload, timeout=300)
-    debug_log(f"Ollama API response received - Status Code: {response.status_code}")
-    
-    response.raise_for_status()
-    debug_log("Response validation passed - Status code indicates success")
+    with log_duration(f"LLM question generation ({MODEL})"):
+        response = requests.post(OLLAMA_URL, json=payload, timeout=300)
+    debug_log(f"Ollama response status: {response.status_code}")
+
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        error_log(f"Ollama question generation returned an HTTP error ({MODEL}): {e}")
+        raise
 
     output = response.json().get("response", "")
-    debug_log(f"Response JSON parsed successfully - Generated content length: {len(output)} characters")
-    
-    # 🔥 ADD THIS LINE HERE
-    debug_log(f"RAW LLM OUTPUT:\n{output}")
-    
-    debug_log("Passing output to parse_questions for parsing")
+    debug_log(f"LLM output ({len(output)} chars): {short(output, 300)}")
+    if not output.strip():
+        warning_log("LLM returned an empty response for question generation")
+
     questions = parse_questions(output)
-    debug_log(f"Question parsing completed - Total questions extracted: {len(questions)}")
 
     # 🔥 ADD THESE LINES HERE
     prog_lang = detect_programming_language(questions)
@@ -167,18 +162,18 @@ def generate_interview_questions(cv_text: str, jd_text: str, num_questions: int)
     for q in questions:
         q["language"] = prog_lang
 
+    if len(questions) != num_questions:
+        warning_log(f"Expected {num_questions} question(s) but parsed {len(questions)} from the LLM output")
+    info_log(f"Generated {len(questions)} interview question(s) - Language: {prog_lang}")
     return questions
     
     return questions
 
 def parse_questions(output: str):
-    debug_log(f"Starting parse_questions - Input length: {len(output)} characters")
-    
     questions = []
 
     # split lines
     lines = [line.strip() for line in output.splitlines() if line.strip()]
-    debug_log(f"Output split into lines - Total lines after filtering: {len(lines)}")
 
     for line in lines:
         # match bullet questions like:
@@ -194,8 +189,6 @@ def parse_questions(output: str):
                 "language": "General"
             })
 
-            debug_log(f"Extracted question: {question[:60]}...")
-
-    debug_log(f"parse_questions completed - Total questions extracted: {len(questions)}")
+    debug_log(f"Parsed {len(questions)} question(s) from {len(lines)} non-empty line(s)")
 
     return questions

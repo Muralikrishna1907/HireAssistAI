@@ -1,20 +1,16 @@
 import requests
 import re
-import inspect
+
+from utils.logger import debug_log, info_log, warning_log, error_log, log_duration, short
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "gpt-oss:120b-cloud"
 # MODEL_NAME = "qwen3:8b"
 
-def debug_log(message):
-    frame = inspect.currentframe().f_back
-    filename = inspect.getframeinfo(frame).filename.split('\\')[-1]
-    function_name = frame.f_code.co_name
-    line_number = frame.f_lineno
-    print(f"[DEBUG] {filename}::{function_name}:{line_number} - {message}")
-
 def generate_job_description(prompt_text: str):
-    debug_log(f"Starting generate_job_description - Prompt length: {len(prompt_text)} characters")
+    debug_log(f"Starting job description generation - Input length: {len(prompt_text)} chars")
+    if not prompt_text or not prompt_text.strip():
+        warning_log("Job description input is empty - the LLM has nothing to base the JD on")
     
     prompt = f"""
         You are a senior HR manager.
@@ -85,27 +81,30 @@ def generate_job_description(prompt_text: str):
         {prompt_text}
     """
    
-    debug_log(f"Full prompt constructed - Total length: {len(prompt)} characters")
-
     payload = {
         "model": MODEL_NAME,
         "prompt": prompt,
         "stream": False
     }
-    debug_log(f"Request payload prepared - Model: {MODEL_NAME}, Stream: False")
+    debug_log(f"Job description request - Model: {MODEL_NAME}, Prompt length: {len(prompt)} chars, Timeout: 300s")
 
-    debug_log(f"Sending request to Ollama API - URL: {OLLAMA_URL}")
-    response = requests.post(OLLAMA_URL, json=payload, timeout=300)
-    debug_log(f"Ollama API response received - Status Code: {response.status_code}")
-    
-    response.raise_for_status()
-    debug_log("Response validation passed - Status code indicates success")
+    with log_duration(f"LLM job description generation ({MODEL_NAME})"):
+        response = requests.post(OLLAMA_URL, json=payload, timeout=300)
+    debug_log(f"Ollama response status: {response.status_code}")
+
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        error_log(f"Ollama job description generation returned an HTTP error ({MODEL_NAME}): {e}")
+        raise
 
     output = response.json()["response"]
-    debug_log(f"Response JSON parsed successfully - Generated content length: {len(output)} characters")
-    
+
     final_output = output.strip()
-    debug_log(f"Output trimmed - Final length: {len(final_output)} characters")
-    debug_log("Job description generation completed successfully")
-    
+    debug_log(f"LLM output ({len(final_output)} chars): {short(final_output, 300)}")
+    if not final_output:
+        warning_log("LLM returned an empty job description")
+    else:
+        info_log(f"Job description generated - {len(final_output)} chars")
+
     return final_output

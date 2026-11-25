@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hire Assist AI - Applications</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Smooth transitions for sidebar text */
+        .sidebar-text {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .sidebar-collapsed .sidebar-text {
+            opacity: 0;
+            display: none;
+        }
+
+        .sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar-collapsed .nav-icon {
+            margin-right: 0;
+        }
+    </style>
+    <!-- Global font: Aptos (Body) -->
+    <style>
+        html, body, button, input, select, textarea, .font-sans, .font-mono {
+            font-family: Aptos, "Aptos Body", "Segoe UI", Calibri, Arial, sans-serif !important;
+        }
+    </style>
+    <!-- Sidebar: collapsed-state tweaks for the toggle and user menu -->
+    <style>
+        .sidebar-collapsed .sidebar-brand { justify-content: center; padding-left: 0; padding-right: 0; }
+        .sidebar-collapsed #sidebar-logo { display: none; }
+        .sidebar-collapsed .sidebar-toggle { margin-left: 0; }
+        .sidebar-collapsed .user-menu-button { justify-content: center; }
+    </style>
+</head>
+
+<body class="bg-blue-50/50 flex h-screen font-sans antialiased text-slate-800 overflow-hidden selection:bg-blue-200">
+
+    <!-- Sidebar (Deep Navy for strong contrast) -->
+    <aside id="sidebar"
+        class="w-64 bg-[linear-gradient(180deg,#1e3a8a,#172554)] text-blue-100 flex flex-col shadow-2xl z-20 flex-shrink-0 transition-all duration-300 ease-in-out">
+
+        <!-- Logo Area -->
+        <div class="sidebar-brand flex items-center px-5 py-3 border-b border-white/10 overflow-hidden">
+            <!-- Logo with the product name underneath -->
+            <div class="flex flex-col items-start min-w-0">
+                <img src="{{ url_for('static', filename='images/SBP-Logo.png') }}" alt="SBP Logo" id="sidebar-logo"
+                class="h-8 w-auto flex-shrink-0 grayscale brightness-200 transition-all duration-300">
+                <span class="sidebar-text mt-1 text-white font-bold text-sm tracking-wide whitespace-nowrap">Hire Assist AI</span>
+            </div>
+            <button type="button" onclick="toggleSidebar()" title="Collapse / expand menu" aria-label="Collapse or expand menu"
+                class="sidebar-toggle ml-auto text-blue-200 hover:text-white p-1 transition-colors focus:outline-none focus-visible:text-white">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex-1 overflow-y-auto py-4 px-3 space-y-5 custom-scrollbar overflow-x-hidden">
+
+            <!-- Main Menu -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-blue-300 tracking-wider mb-2 whitespace-nowrap">
+                    Main Menu</p>
+                <nav class="space-y-1">
+                    <a href="{{ url_for('dashboard') if url_for else '/dashboard' }}"
+                        class="nav-item flex items-center px-3 py-2 text-blue-100 hover:text-white hover:bg-white/10 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-chart-line w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Dashboard</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Job Management -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-blue-300 tracking-wider mb-2 whitespace-nowrap">
+                    Job Management</p>
+                <nav class="space-y-1">
+                    <a href="{{ url_for('excel_upload') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-2 text-blue-100 hover:text-white hover:bg-white/10 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-list-check w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Smart Shortlisting</span>
+                    </a>
+                    <a href="{{ url_for('job_descriptions') }}"
+                        class="nav-item flex items-center px-3 py-2 text-blue-100 hover:text-white hover:bg-white/10 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-table-list w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Jobs</span>
+                    </a>
+                    <!-- Applications (Active) -->
+                    <a href="{{ url_for('applications') }}"
+                        class="nav-item flex items-center px-3 py-2 bg-white/15 text-white rounded-xl border-l-4 border-sky-300 transition-colors">
+                        <i class="fa-solid fa-user-check w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Applications</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Administration -->
+            <div>
+                <p
+                    class="sidebar-text px-3 text-[11px] font-extrabold text-blue-300 tracking-wider mb-2 whitespace-nowrap">
+                    Administration</p>
+                <nav class="space-y-1">
+                    <a href="{{ url_for('manage_users') if url_for else '#' }}"
+                        class="nav-item flex items-center px-3 py-2 text-blue-100 hover:text-white hover:bg-white/10 rounded-xl transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-users w-5 nav-icon mr-3 text-center"></i>
+                        <span class="sidebar-text font-semibold text-sm whitespace-nowrap">Manage Users</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Signed-in user (Logout lives here) -->
+        {% set display_name = session.get('username', session.get('user', 'Admin User')) %}
+        <div class="relative border-t border-white/10 p-3 shrink-0" id="userMenu">
+            <div id="userMenuDropdown" hidden
+                class="absolute bottom-full left-3 mb-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50">
+                <a href="{{ url_for('logout') if url_for else '/logout' }}"
+                    class="flex items-center px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors">
+                    <i class="fa-solid fa-arrow-right-from-bracket w-4 mr-2"></i> Logout
+                </a>
+            </div>
+            <button type="button" id="userMenuButton" onclick="toggleUserMenu(event)" aria-haspopup="true"
+                aria-expanded="false" title="{{ display_name }}"
+                class="user-menu-button w-full flex items-center px-2 py-2 rounded-xl hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                <div
+                    class="w-8 h-8 shrink-0 rounded-full bg-white/15 text-white flex items-center justify-center font-bold text-sm border border-white/20 uppercase">
+                    {{ display_name[0] }}
+                </div>
+                <span class="sidebar-text ml-3 flex-1 min-w-0 text-left text-sm font-bold text-white capitalize truncate">{{ display_name }}</span>
+                <i class="sidebar-text fa-solid fa-chevron-up text-[10px] text-blue-200 ml-2"></i>
+            </button>
+        </div>
+        <script>
+            function setUserMenu(open) {
+                document.getElementById('userMenuDropdown').hidden = !open;
+                document.getElementById('userMenuButton').setAttribute('aria-expanded', String(open));
+            }
+            function toggleUserMenu(e) {
+                e.stopPropagation();
+                setUserMenu(document.getElementById('userMenuDropdown').hidden);
+            }
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#userMenu')) setUserMenu(false);
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') setUserMenu(false);
+            });
+        </script>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+
+        {# ---------- colour helpers ---------- #}
+        {% set FINAL_TONE = {
+            'SELECTED': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+            'REJECTED': 'bg-rose-100 text-rose-800 border-rose-200',
+            'PENDING': 'bg-amber-100 text-amber-800 border-amber-200',
+            'NOT APPEARED': 'bg-slate-100 text-slate-700 border-slate-200',
+            'VIOLATED': 'bg-purple-100 text-purple-800 border-purple-200'
+        } %}
+        {# status bar segment colours (segment states come from apply_overall_status) #}
+        {% set SEGMENT_TONE = {
+            'done': 'bg-blue-500', 'current': 'bg-blue-300', 'todo': 'bg-slate-200',
+            'failed': 'bg-rose-400', 'pending': 'bg-amber-400', 'violated': 'bg-purple-500',
+            'not_appeared': 'bg-slate-400', 'cleared': 'bg-emerald-500'
+        } %}
+        {% set ROUND_TONE = 'bg-indigo-100 text-indigo-800 border-indigo-200' %}
+        {% set STAGE_TONE = {
+            'CV Screening': 'bg-slate-100 text-slate-700 border-slate-200',
+            'CV Rejected': 'bg-rose-100 text-rose-800 border-rose-200',
+            'Awaiting Details': 'bg-sky-100 text-sky-800 border-sky-200',
+            'Details Incomplete': 'bg-orange-100 text-orange-800 border-orange-200',
+            'Awaiting Interview': 'bg-amber-100 text-amber-800 border-amber-200',
+            'Interview In Progress': 'bg-blue-100 text-blue-800 border-blue-200',
+            'Interview Completed': 'bg-emerald-100 text-emerald-800 border-emerald-200'
+        } %}
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 flex flex-col custom-scrollbar">
+
+            <div
+                class="bg-white rounded-2xl shadow-sm border border-slate-300 overflow-hidden flex flex-col flex-1 min-h-[500px]">
+
+                <!-- Toolbar: search + filters -->
+                <div class="px-6 py-4 border-b border-slate-200 bg-white flex flex-col lg:flex-row lg:items-center gap-3 shrink-0">
+                    <div class="relative w-full lg:w-72">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-slate-400"></i>
+                        </div>
+                        <input type="text" id="appSearch" oninput="applyFilters()" placeholder="Search name, email or ID..."
+                            class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-inner">
+                    </div>
+
+                    <select id="jobFilter" onchange="applyFilters()" aria-label="Filter by job"
+                        class="w-full lg:w-56 px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Jobs</option>
+                        {% for j in job_options %}
+                        <option value="{{ j.id }}" {% if j.id == selected_job %}selected{% endif %}>
+                            {{ j.id }}{% if j.title %} – {{ j.title }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select id="statusFilter" onchange="applyFilters()" aria-label="Filter by processing status"
+                        class="w-full lg:w-52 px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Statuses</option>
+                        <optgroup label="In progress">
+                            <option>CV Screening</option>
+                            <option>Awaiting Details</option>
+                            <option>Details Incomplete</option>
+                            <option>Awaiting Interview</option>
+                            <option>Interview In Progress</option>
+                        </optgroup>
+                        {% if round_statuses %}
+                        <optgroup label="Interview rounds">
+                            {% for s in round_statuses %}<option>{{ s }}</option>{% endfor %}
+                        </optgroup>
+                        {% endif %}
+                        <optgroup label="Decision">
+                            <option>Selected</option>
+                            <option>Pending</option>
+                            <option>Rejected</option>
+                            <option>Violated</option>
+                        </optgroup>
+                    </select>
+
+                    <p class="text-xs font-semibold text-slate-500 lg:ml-auto whitespace-nowrap">
+                        <span id="appCount">{{ applications|length }}</span> of {{ applications|length }} applications
+                    </p>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-y-auto overflow-x-auto custom-scrollbar flex-1 relative bg-white">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-blue-50 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-[10px] font-extrabold text-blue-800 tracking-widest whitespace-nowrap">Candidate</th>
+                                <th scope="col" class="px-6 py-3 text-left text-[10px] font-extrabold text-blue-800 tracking-widest whitespace-nowrap">Job</th>
+                                <th scope="col" class="px-6 py-3 text-center text-[10px] font-extrabold text-blue-800 tracking-widest whitespace-nowrap">Applied On</th>
+                                <th scope="col" class="px-6 py-3 text-right text-[10px] font-extrabold text-blue-800 tracking-widest whitespace-nowrap">CV Match</th>
+                                <th scope="col" class="px-6 py-3 text-right text-[10px] font-extrabold text-blue-800 tracking-widest whitespace-nowrap">Interview Score</th>
+                                <th scope="col" class="px-6 py-3 text-left text-[10px] font-extrabold text-blue-800 tracking-widest whitespace-nowrap">Current Round</th>
+                                <th scope="col" class="px-6 py-3 text-left text-[10px] font-extrabold text-blue-800 tracking-widest whitespace-nowrap">Processing Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100">
+                            {% for a in applications %}
+                            <tr class="app-row hover:bg-blue-50/60 cursor-pointer transition-colors" title="Click to view application details"
+                                data-id="{{ a.id }}" data-job="{{ a.job_id }}" data-status="{{ a.overall_status }}"
+                                data-search="{{ (a.name ~ ' ' ~ a.email ~ ' ' ~ a.id)|lower }}"
+                                onclick="openAppPanel(this.dataset.id)">
+                                <td class="px-6 py-2">
+                                    <p class="text-sm font-bold text-slate-800">{{ a.name or '—' }}</p>
+                                    <p class="text-xs text-slate-500">{{ a.email }}</p>
+                                    <p class="text-[11px] text-slate-400">ID <span class="font-mono">{{ a.id }}</span></p>
+                                </td>
+                                <td class="px-6 py-2">
+                                    <p class="text-sm font-semibold text-slate-700">{{ a.job_title or '—' }}</p>
+                                    <p class="text-xs font-mono text-slate-500">{{ a.job_id }}</p>
+                                </td>
+                                <td class="px-6 py-2 whitespace-nowrap text-center text-xs font-medium text-slate-500">{{ a.applied_on or 'N/A' }}</td>
+                                <td class="px-6 py-2 whitespace-nowrap text-right tabular-nums text-sm font-black text-blue-600">
+                                    {{ (a.match_score ~ '%') if a.match_score is not none else '—' }}</td>
+                                <td class="px-6 py-2 whitespace-nowrap text-right tabular-nums text-sm font-bold text-slate-700">
+                                    {% if a.round_scores|length > 1 %}
+                                    {# one line per round: the assessment %, then interview-round marks #}
+                                    {% for s in a.round_scores %}
+                                    <p class="leading-5"><span class="text-[10px] font-semibold text-slate-400 mr-1">{{ s.round }}</span><span class="{{ 'text-rose-700' if s.state == 'failed' else 'text-slate-700' }}">{{ s.score }}</span></p>
+                                    {% endfor %}
+                                    {% else %}{{ a.exam_score }}{% endif %}
+                                </td>
+                                <td class="px-6 py-2 whitespace-nowrap">
+                                    {% set rp = a.rounds %}
+                                    {% if rp.current %}
+                                    <p class="text-sm font-semibold text-slate-800">{{ rp.current_name }}</p>
+                                    <p class="text-[11px] text-slate-500">{{ rp.summary }}{% if rp.can_decide %} · <span class="text-amber-700 font-bold">Decision due</span>{% endif %}</p>
+                                    {% elif rp.summary == 'All rounds cleared' %}
+                                    <p class="text-sm font-semibold text-emerald-700">All rounds cleared</p>
+                                    <p class="text-[11px] text-slate-500">{{ rp.total }} of {{ rp.total }} rounds</p>
+                                    {% elif rp.summary.startswith('Rejected in') or rp.summary.startswith('Ended at') %}
+                                    <p class="text-sm font-semibold text-rose-700">{{ rp.summary }}</p>
+                                    {% else %}
+                                    <p class="text-sm text-slate-400">{{ rp.summary or '—' }}</p>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-2 whitespace-nowrap">
+                                    <!-- progress: Applied, CV screening, then one segment per round (hover for details) -->
+                                    {% set seg_w = 'w-6' if a.progress|length <= 4 else ('w-5' if a.progress|length == 5 else 'w-4') %}
+                                    <div class="flex items-center gap-1 mb-1">
+                                        {% for s in a.progress %}
+                                        <span class="h-1.5 {{ seg_w }} rounded-full {{ SEGMENT_TONE.get(s.state, 'bg-slate-200') }}" title="{{ s.title }}"></span>
+                                        {% endfor %}
+                                    </div>
+                                    {% if a.overall_tone == 'ROUND' %}
+                                    <span class="px-2 py-0.5 inline-flex text-[11px] font-bold rounded-full border {{ ROUND_TONE }}">{{ a.overall_status }}</span>
+                                    {% elif a.overall_tone == 'APPROVAL' %}
+                                    <span class="px-2 py-0.5 inline-flex text-[11px] font-bold rounded-full border bg-amber-100 text-amber-800 border-amber-200"
+                                        title="The interviewer submitted the scorecard - open the candidate to approve">
+                                        <i class="fa-solid fa-user-check mr-1 text-[10px] self-center"></i>{{ a.overall_status }}</span>
+                                    {% elif a.overall_final %}
+                                    <span class="px-2 py-0.5 inline-flex text-[11px] font-bold rounded-full border {{ FINAL_TONE.get(a.overall_tone, FINAL_TONE['NOT APPEARED']) }}"
+                                        {% if a.stage == 'CV Rejected' %}title="Rejected at CV screening"{% endif %}>{{ a.overall_status }}</span>
+                                    {% else %}
+                                    <span class="px-2 py-0.5 inline-flex text-[11px] font-bold rounded-full border {{ STAGE_TONE.get(a.stage, STAGE_TONE['CV Screening']) }}">{{ a.overall_status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr id="noAppsRow" {% if applications %}hidden{% endif %}>
+                                <td colspan="7" class="px-6 py-16 text-center text-slate-500">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                                        <p class="text-sm font-medium">No applications match the current filters.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- APPLICATION DETAILS SIDE PANEL (right) -->
+    <div id="appPanelOverlay" hidden onclick="closeAppPanel()" class="fixed inset-0 bg-slate-900/30 z-40"></div>
+    <aside id="appPanel" aria-hidden="true" aria-labelledby="apName"
+        class="fixed top-0 right-0 h-full w-full sm:w-[28rem] bg-white shadow-2xl border-l border-slate-200 z-50 flex flex-col translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="h-14 px-5 flex items-center justify-between border-b border-slate-200 bg-blue-50 shrink-0">
+            <div class="min-w-0">
+                <p class="text-[10px] font-extrabold text-blue-800 tracking-widest">Candidate ID <span id="apId" class="font-mono"></span></p>
+                <h3 id="apName" class="text-base font-black text-slate-800 truncate"></h3>
+            </div>
+            <button type="button" onclick="closeAppPanel()" title="Close"
+                class="text-slate-400 hover:text-slate-700 p-1 ml-3 transition-colors focus:outline-none focus-visible:text-slate-700">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-5">
+            <!-- Contact & job -->
+            <dl class="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
+                <dt class="text-xs font-bold text-slate-500">Email</dt>
+                <dd id="apEmail" class="col-span-2 text-slate-800 break-all"></dd>
+                <dt class="text-xs font-bold text-slate-500">Job</dt>
+                <dd id="apJob" class="col-span-2 text-slate-800"></dd>
+                <dt class="text-xs font-bold text-slate-500">Experience</dt>
+                <dd id="apExperience" class="col-span-2 text-slate-800"></dd>
+                <dt class="text-xs font-bold text-slate-500">Shortlisted</dt>
+                <dd id="apShortlisted" class="col-span-2 font-bold"></dd>
+            </dl>
+
+            <!-- Scores -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-xl border border-slate-200 p-3 text-center">
+                    <p class="text-[10px] font-extrabold text-slate-500 tracking-widest">CV Match</p>
+                    <p id="apMatch" class="text-lg font-black text-blue-600"></p>
+                </div>
+                <div class="rounded-xl border border-slate-200 p-3 text-center">
+                    <p class="text-[10px] font-extrabold text-slate-500 tracking-widest">Interview Score</p>
+                    <!-- one line per round once there are interview-round marks (filled by script) -->
+                    <div id="apExam" class="text-lg font-black text-slate-700"></div>
+                </div>
+            </div>
+
+            <!-- Processing timeline -->
+            <div>
+                <h4 class="text-xs font-extrabold text-blue-800 tracking-widest mb-3">Processing Status</h4>
+                <ol id="apTimeline" class="relative border-l-2 border-slate-200 ml-2 space-y-4"></ol>
+            </div>
+
+            <!-- Decision -->
+            <div class="rounded-xl border border-slate-200 px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-extrabold text-blue-800 tracking-widest">Assessment Decision</span>
+                    <span id="apDecision" class="px-2.5 py-1 inline-flex text-[11px] font-bold rounded-full border"></span>
+                </div>
+                <!-- Change decision (filled by script) -->
+                <div id="apDecisionActions" class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2"></div>
+            </div>
+
+            <!-- Interview rounds: current round + decision for non-assessment rounds -->
+            <div class="rounded-xl border border-slate-200 px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-extrabold text-blue-800 tracking-widest">Interview Rounds</span>
+                    <span id="apRoundSummary" class="text-[11px] font-bold text-slate-500"></span>
+                </div>
+                <ol id="apRounds" class="mt-3 space-y-2"></ol>
+
+                <!-- Interview schedule for the current (non-assessment) round -->
+                <div id="apSchedule" class="hidden mt-3 pt-3 border-t border-slate-100">
+                    <div id="schView"></div>
+
+                    <form id="schForm" class="hidden space-y-2" novalidate onsubmit="event.preventDefault(); submitSchedule();">
+                        <p class="text-xs font-bold text-slate-700"><span id="schFormTitle">Schedule interview</span></p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="text-[11px] font-bold text-slate-500">Date
+                                <input id="schDate" type="date" required class="mt-0.5 w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"></label>
+                            <label class="text-[11px] font-bold text-slate-500">Time (IST)
+                                <input id="schTime" type="time" required class="mt-0.5 w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"></label>
+                            <label class="text-[11px] font-bold text-slate-500">Duration
+                                <select id="schDuration" class="mt-0.5 w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                    <option value="30">30 min</option><option value="45" selected>45 min</option>
+                                    <option value="60">1 hour</option><option value="90">1.5 hours</option>
+                                </select></label>
+                            <label class="text-[11px] font-bold text-slate-500">Mode
+                                <select id="schMode" onchange="syncScheduleMode()" class="mt-0.5 w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                    <option value="ONLINE">Online</option><option value="IN_PERSON">In person</option>
+                                </select></label>
+                        </div>
+                        <label class="block text-[11px] font-bold text-slate-500"><span id="schLocationLabel">Meeting link</span>
+                            <input id="schLocation" type="text" maxlength="500" required class="mt-0.5 w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"></label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="text-[11px] font-bold text-slate-500">Interviewer name
+                                <input id="schIName" type="text" maxlength="255" required class="mt-0.5 w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"></label>
+                            <label class="text-[11px] font-bold text-slate-500">Interviewer email
+                                <input id="schIEmail" type="email" maxlength="255" required class="mt-0.5 w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"></label>
+                        </div>
+                        <label class="block text-[11px] font-bold text-slate-500">Note for the candidate (optional)
+                            <input id="schNote" type="text" maxlength="1000" class="mt-0.5 w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"></label>
+                        <p class="text-[11px] text-slate-500"><i class="fa-regular fa-envelope mr-1"></i>The candidate and the interviewer will be emailed.</p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="closeScheduleForm()"
+                                class="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>
+                            <button type="submit" id="schSaveBtn"
+                                class="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-60">Schedule &amp; send invites</button>
+                        </div>
+                    </form>
+
+                    <div id="schCancelConfirm" class="hidden">
+                        <p class="text-xs text-slate-700 mb-2">Cancel this interview? The candidate and the interviewer will be emailed, and the scorecard link will stop working.</p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="renderSchedule(APPS[panelAppId])"
+                                class="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Keep it</button>
+                            <button type="button" id="schCancelBtn" onclick="cancelSchedule()"
+                                class="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg disabled:opacity-60">Yes, cancel interview</button>
+                        </div>
+                    </div>
+                    <p id="schError" class="mt-2 text-xs font-semibold text-rose-600" hidden></p>
+                </div>
+
+                <!-- Decision form for the current (non-assessment) round -->
+                <div id="apRoundForm" class="hidden mt-3 pt-3 border-t border-slate-100">
+                    <p class="text-xs font-bold text-slate-700 mb-2"><span id="rfLead">Decision for</span> <span id="rfRoundName"></span></p>
+                    <div class="grid grid-cols-3 gap-2 mb-2">
+                        <label for="rfMarks" class="text-xs font-semibold text-slate-500 self-center">Marks <span id="rfMax" class="text-slate-400"></span></label>
+                        <input id="rfMarks" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Optional"
+                            class="col-span-2 px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    </div>
+                    <textarea id="rfRemarks" rows="2" maxlength="2000" placeholder="Remarks (optional)"
+                        class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"></textarea>
+                    <div id="rfButtons" class="mt-2 flex justify-end gap-2">
+                        <button type="button" onclick="askRoundDecision('REJECT')"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg border text-rose-700 border-rose-200 bg-rose-50 hover:bg-rose-100 flex items-center">
+                            <i class="fa-solid fa-xmark mr-1.5"></i> <span id="rfRejectLabel">Reject</span>
+                        </button>
+                        <button type="button" onclick="askRoundDecision('PASS')"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg border text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 flex items-center">
+                            <i class="fa-solid fa-check mr-1.5"></i> <span id="rfPassLabel">Pass</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Inline confirmation (used for decide and undo) -->
+                <div id="rfConfirm" class="hidden mt-3 pt-3 border-t border-slate-100">
+                    <p id="rfConfirmText" class="text-xs text-slate-700 mb-2"></p>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="cancelRoundDecision()"
+                            class="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>
+                        <button type="button" id="rfConfirmBtn" onclick="submitRoundDecision()"
+                            class="px-3 py-1.5 text-xs font-bold text-white rounded-lg disabled:opacity-60"></button>
+                    </div>
+                </div>
+                <p id="rfError" class="mt-2 text-xs font-semibold text-rose-600" hidden></p>
+            </div>
+
+            <!-- Interview link & account (same data as the Reports page) -->
+            <div class="rounded-xl border border-slate-200 px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-extrabold text-blue-800 tracking-widest">Interview Link</span>
+                    <span id="apAccount" class="px-2.5 py-1 inline-flex text-[11px] font-bold rounded-full border bg-slate-100 text-slate-500 border-slate-200">Loading...</span>
+                </div>
+                <dl id="apLinkInfo" class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs"></dl>
+                <p id="apLinkError" class="mt-2 text-xs font-semibold text-rose-600" hidden></p>
+
+                <!-- Regenerate (with inline confirmation) -->
+                <div class="mt-3 pt-3 border-t border-slate-100">
+                    <div id="apRegenIdle" class="flex justify-end">
+                        <button type="button" onclick="askRegenerate(true)"
+                            class="px-3 py-1.5 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-lg transition-colors flex items-center">
+                            <i class="fa-solid fa-rotate mr-1.5"></i> Regenerate Link
+                        </button>
+                    </div>
+                    <div id="apRegenConfirm" class="hidden">
+                        <p class="text-xs text-slate-600 mb-2">Create a new interview link? The current link stops working and the device lock is cleared.</p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="askRegenerate(false)"
+                                class="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>
+                            <button type="button" id="apRegenGo" onclick="regenerateLink()"
+                                class="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Yes, regenerate</button>
+                        </div>
+                    </div>
+                    <div id="apNewLink" class="hidden mt-2">
+                        <label for="apNewLinkInput" class="text-[11px] font-bold text-emerald-700">New link (valid 48 hours)</label>
+                        <div class="mt-1 flex gap-2">
+                            <input id="apNewLinkInput" type="text" readonly onclick="this.select()"
+                                class="flex-1 min-w-0 px-2 py-1.5 text-xs font-mono border border-slate-300 rounded-lg bg-slate-50">
+                            <button type="button" onclick="copyNewLink()"
+                                class="px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 flex items-center">
+                                <i class="fa-solid fa-copy mr-1.5"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-5 py-2 border-t border-slate-200 flex flex-wrap justify-end items-center gap-3 shrink-0">
+            <button type="button" id="apImageBtn" onclick="previewFace()" title="Candidate Image" aria-label="Candidate Image"
+                class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <i class="fa-solid fa-image-portrait text-lg"></i>
+                <span class="text-[11px] font-bold leading-none">Image</span>
+            </button>
+            <a id="apCvLink" href="#" target="_blank" rel="noopener" title="Download CV" aria-label="Download CV"
+                class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <i class="fa-solid fa-file-arrow-down text-lg"></i>
+                <span class="text-[11px] font-bold leading-none">CV</span>
+            </a>
+            <a id="apReportLink" href="#" target="_blank" rel="noopener" title="Interview Report" aria-label="Interview Report"
+                class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <i class="fa-solid fa-file-pdf text-lg"></i>
+                <span class="text-[11px] font-bold leading-none">Report</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- CANDIDATE IMAGE PREVIEW (sits above the side panel) -->
+    <div id="faceModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] items-center justify-center"
+        onclick="if (event.target === this) closeFace()">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl text-center max-w-lg w-full mx-4 relative border border-slate-200">
+            <h3 class="text-lg font-black text-slate-800 mb-5">Captured Candidate Image</h3>
+            <div class="flex justify-center mb-6">
+                <img id="faceImage" class="max-w-full max-h-[50vh] rounded-xl border border-slate-200 shadow-sm object-contain"
+                    alt="Candidate face">
+            </div>
+            <button type="button" onclick="closeFace()"
+                class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-8 rounded-xl transition-colors text-sm shadow-md">
+                Close Preview
+            </button>
+        </div>
+    </div>
+
+    <!-- CHANGE DECISION CONFIRMATION (sits above the side panel) -->
+    <div id="decisionModal" role="dialog" aria-modal="true" aria-labelledby="dmTitle"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex flex-col items-center text-center">
+                <div id="dmIcon" class="w-14 h-14 rounded-full flex items-center justify-center mb-3 border"></div>
+                <h3 id="dmTitle" class="text-lg font-black text-slate-800"></h3>
+            </div>
+            <div class="px-6 py-5 bg-white space-y-3">
+                <p id="dmMessage" class="text-sm text-slate-700 leading-relaxed"></p>
+                <p id="dmWarning" hidden
+                    class="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"></p>
+                <p class="text-xs text-slate-500"><i class="fa-regular fa-envelope mr-1.5"></i><span id="dmEmailNote"></span></p>
+                <p id="dmError" hidden class="text-xs font-bold text-rose-600"></p>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 flex justify-end gap-3 border-t border-slate-100">
+                <button type="button" onclick="closeDecisionModal()"
+                    class="px-5 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors">Cancel</button>
+                <button type="button" id="dmConfirmBtn" onclick="confirmDecisionChange()"
+                    class="px-5 py-2 text-sm font-bold text-white rounded-lg transition-colors flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
+                    <span id="dmConfirmLabel"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROUND DETAILS (round info + how the candidate performed; sits above the side panel) -->
+    <div id="roundModal" role="dialog" aria-modal="true" aria-labelledby="rmTitle"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] items-center justify-center p-4"
+        onclick="if (event.target === this) closeRoundModal()">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden border border-slate-200 flex flex-col">
+            <div class="px-6 py-4 bg-[#0f2a5f] text-white flex items-start justify-between shrink-0">
+                <div class="min-w-0">
+                    <p id="rmKicker" class="text-[10px] font-extrabold tracking-widest text-sky-200"></p>
+                    <h3 id="rmTitle" class="text-lg font-black truncate"></h3>
+                    <p id="rmWho" class="text-xs text-blue-100 truncate"></p>
+                </div>
+                <div class="flex items-center gap-3 ml-3 shrink-0">
+                    <span id="rmState" class="px-2.5 py-1 inline-flex text-[11px] font-bold rounded-full border"></span>
+                    <button type="button" onclick="closeRoundModal()" title="Close"
+                        class="text-blue-100 hover:text-white p-1 focus:outline-none focus-visible:text-white">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="rmBody" class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5 bg-slate-50"></div>
+        </div>
+    </div>
+
+    <!-- UI & Logic Scripts -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const logo = document.getElementById('sidebar-logo');
+            if (sidebar.classList.contains('w-64')) {
+                sidebar.classList.remove('w-64'); sidebar.classList.add('w-20', 'sidebar-collapsed'); logo.classList.remove('mr-3');
+            } else {
+                sidebar.classList.remove('w-20', 'sidebar-collapsed'); sidebar.classList.add('w-64'); setTimeout(() => logo.classList.add('mr-3'), 150);
+            }
+        }
+
+        // ---------- Filters ----------
+        function applyFilters() {
+            const q = document.getElementById('appSearch').value.trim().toLowerCase();
+            const job = document.getElementById('jobFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            let shown = 0;
+            document.querySelectorAll('.app-row').forEach(row => {
+                const ok = (!q || row.dataset.search.includes(q)) &&
+                    (!job || row.dataset.job === job) &&
+                    (!status || row.dataset.status === status);
+                row.hidden = !ok;
+                if (ok) shown++;
+            });
+            document.getElementById('appCount').textContent = shown;
+            document.getElementById('noAppsRow').hidden = shown > 0;
+
+            // keep the job filter in the URL so the view can be shared / reloaded
+            const url = new URL(location.href);
+            if (job) url.searchParams.set('job', job); else url.searchParams.delete('job');
+            history.replaceState(null, '', url);
+        }
+
+        // ---------- Details panel ----------
+        const APPS = Object.fromEntries({{ applications | tojson }}.map(a => [a.id, a]));
+        const CV_URL = "{{ url_for('download_attachment', candidate_id='__ID__') }}";
+        const REPORT_URL = "{{ url_for('candidate_report', candidate_id='__ID__') }}";
+        const DECISION_TONE = {
+            'SELECTED': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+            'REJECTED': 'bg-rose-100 text-rose-800 border-rose-200',
+            'PENDING': 'bg-amber-100 text-amber-800 border-amber-200',
+            'NOT APPEARED': 'bg-slate-100 text-slate-700 border-slate-200',
+            'VIOLATED': 'bg-purple-100 text-purple-800 border-purple-200'
+        };
+        let panelAppId = null;
+
+        function titleCase(s) { return (s || '').toLowerCase().replace(/\b\w/g, ch => ch.toUpperCase()); }
+
+        // Candidate details asked by email (replaces the Google Form); shown only when requested
+        function detailsStep(a) {
+            if (!a.details_status) return [];
+            const asked = a.details_requests
+                ? 'Asked ' + a.details_requests + ' of ' + a.details_max_requests + ' times' : '';
+            const missing = (a.details_missing || []).join(', ');
+            if (a.details_status === 'COMPLETE') {
+                return [{ label: 'Candidate details received', detail: '', state: 'done' }];
+            }
+            if (a.details_status === 'INCOMPLETE') {
+                return [{ label: 'Candidate details incomplete',
+                          detail: [missing && 'Still missing: ' + missing, asked].filter(Boolean).join(' · '),
+                          state: 'failed' }];
+            }
+            return [{ label: 'Waiting for candidate details',
+                      detail: [missing && 'Missing: ' + missing, asked].filter(Boolean).join(' · '),
+                      state: 'current' }];
+        }
+
+        function timelineSteps(a) {
+            const cvRejected = a.stage === 'CV Rejected';
+            return [
+                { label: 'Application received', detail: a.applied_on || '', state: 'done' },
+                {
+                    label: cvRejected ? 'CV not shortlisted' : (a.stage_step >= 2 ? 'CV shortlisted' : 'CV screening'),
+                    detail: a.match_score !== null ? 'CV match ' + a.match_score + '%' : '',
+                    state: cvRejected ? 'failed' : (a.stage_step >= 2 ? 'done' : 'current')
+                },
+                ...detailsStep(a),
+                {
+                    label: a.exam_submit ? 'Interview completed'
+                        : (a.exam_start ? (a.stage === 'Interview Completed' ? 'Interview ended (not submitted)' : 'Interview in progress') : 'Interview not started'),
+                    detail: a.exam_submit ? 'Submitted ' + a.exam_submit : (a.exam_start ? 'Started ' + a.exam_start : ''),
+                    state: (cvRejected || a.stage === 'Details Incomplete') ? 'skipped'
+                        : (a.exam_submit || a.stage === 'Interview Completed' ? 'done' : (a.stage === 'Awaiting Details' ? 'todo' : (a.stage_step >= 2 ? 'current' : 'todo')))
+                },
+                ...roundSteps(a, cvRejected),
+                {
+                    label: a.overall_final ? 'Final decision: ' + a.overall_status : 'Final decision pending',
+                    detail: cvRejected ? 'Rejected at CV screening' : '',
+                    state: a.overall_final ? (a.overall_tone === 'SELECTED' ? 'done' : (a.overall_tone === 'PENDING' ? 'current' : 'failed')) : 'todo'
+                }
+            ];
+        }
+
+        // Interview Score tile: the assessment score alone, or one line per round once rounds have marks
+        function renderRoundScores(a) {
+            const box = document.getElementById('apExam');
+            const scores = a.round_scores || [];
+            box.innerHTML = '';
+            if (scores.length <= 1) {
+                box.className = 'text-lg font-black text-slate-700';
+                box.textContent = scores.length ? scores[0].score : a.exam_score;
+                return;
+            }
+            box.className = 'mt-1 space-y-0.5 text-left';
+            scores.forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'flex items-baseline justify-between gap-2 text-xs';
+                const name = document.createElement('span');
+                name.className = 'font-semibold text-slate-500 truncate';
+                name.textContent = s.round;
+                const val = document.createElement('span');
+                val.className = 'font-black tabular-nums ' + (s.state === 'failed' ? 'text-rose-700' : 'text-slate-800');
+                val.textContent = s.score;
+                row.append(name, val);
+                box.appendChild(row);
+            });
+        }
+
+        // Assessment decision, then one step per interview round (Technical, HR, ...)
+        function roundSteps(a, cvRejected) {
+            const rounds = (a.rounds && a.rounds.rounds) || [];
+            const assessName = (rounds[0] && rounds[0].name) || 'Assessment';
+            const fs = a.final_status;
+            const steps = [{
+                label: cvRejected ? assessName : (a.is_final ? assessName + ': ' + titleCase(fs) : assessName + ' decision pending'),
+                detail: a.is_final && !cvRejected && a.exam_score !== 'N/A' ? 'Score ' + a.exam_score : '',
+                state: cvRejected ? 'skipped' : !a.is_final ? 'todo'
+                    : (fs === 'SELECTED' ? 'done' : (fs === 'PENDING' ? 'current' : 'failed'))
+            }];
+            rounds.slice(1).forEach(r => {
+                const res = r.result, sch = r.schedule;
+                const marks = res && res.marks !== null && res.marks !== undefined
+                    ? 'Marks ' + res.marks + (r.max_marks ? ' / ' + r.max_marks : '') : '';
+                if (r.state === 'passed') {
+                    steps.push({ label: r.name + ' round cleared', detail: marks, state: 'done' });
+                } else if (r.state === 'failed') {
+                    steps.push({ label: 'Rejected in ' + r.name, detail: marks, state: 'failed' });
+                } else if (r.state === 'current' && sch && sch.status === 'SUBMITTED' && sch.scores) {
+                    steps.push({
+                        label: r.name + ': interviewer recommends ' + (sch.scores.recommendation === 'PASSED' ? 'Pass' : 'Reject'),
+                        detail: 'Waiting for your approval' + (sch.scores.marks !== undefined && sch.scores.marks !== null
+                            ? ' · Marks ' + sch.scores.marks + (r.max_marks ? ' / ' + r.max_marks : '') : ''),
+                        state: 'current'
+                    });
+                } else if (r.state === 'current') {
+                    const scheduled = sch && sch.status === 'SCHEDULED';
+                    steps.push({
+                        label: scheduled ? r.name + ' interview scheduled' : 'Selected for ' + r.name + ' round',
+                        detail: scheduled ? sch.when + (sch.interviewer ? ' with ' + sch.interviewer : '') : 'Interview not scheduled yet',
+                        state: 'current'
+                    });
+                } else {
+                    steps.push({ label: r.name + ' round', detail: '', state: r.state === 'skipped' ? 'skipped' : 'todo' });
+                }
+            });
+            return steps;
+        }
+
+        const DOT = {
+            done: 'bg-blue-600 border-blue-600',
+            current: 'bg-white border-blue-600',
+            failed: 'bg-rose-500 border-rose-500',
+            skipped: 'bg-slate-200 border-slate-300',
+            todo: 'bg-white border-slate-300'
+        };
+
+        function openAppPanel(id) {
+            const a = APPS[id];
+            if (!a) return;
+            panelAppId = id;
+            if (panelAppId !== window.__lastLinkId) document.getElementById('apNewLink').classList.add('hidden');
+            window.__lastLinkId = panelAppId;
+            loadLinkStatus(id);
+
+            document.getElementById('apId').textContent = a.id;
+            document.getElementById('apName').textContent = a.name || 'Unnamed candidate';
+            document.getElementById('apEmail').textContent = a.email || '—';
+            document.getElementById('apJob').textContent = (a.job_title ? a.job_title + ' ' : '') + '(' + (a.job_id || '—') + ')';
+            document.getElementById('apExperience').textContent = a.experience;
+            const sl = document.getElementById('apShortlisted');
+            const slInfo = a.cv_status === 'SHORTLISTED' ? ['Yes', 'text-emerald-700']
+                : a.cv_status === 'NOT SHORTLISTED' ? ['No', 'text-rose-700'] : ['Pending CV screening', 'text-slate-500'];
+            sl.textContent = slInfo[0];
+            sl.className = 'col-span-2 font-bold ' + slInfo[1];
+            document.getElementById('apMatch').textContent = a.match_score !== null ? a.match_score + '%' : '—';
+            renderRoundScores(a);
+
+            const decision = document.getElementById('apDecision');
+            decision.className = 'px-2.5 py-1 inline-flex text-[11px] font-bold rounded-full border ' +
+                (DECISION_TONE[a.final_status] || DECISION_TONE['NOT APPEARED']);
+            decision.textContent = titleCase(a.final_status);
+            renderDecisionActions(a);
+            renderRounds(a);
+
+            const list = document.getElementById('apTimeline');
+            list.innerHTML = '';
+            timelineSteps(a).forEach(step => {
+                const li = document.createElement('li');
+                li.className = 'ml-5 relative';
+                const dot = document.createElement('span');
+                dot.className = 'absolute -left-[1.85rem] top-0.5 w-3.5 h-3.5 rounded-full border-2 ' + DOT[step.state];
+                const label = document.createElement('p');
+                label.className = 'text-sm font-bold ' + (step.state === 'todo' || step.state === 'skipped' ? 'text-slate-400' : 'text-slate-800');
+                label.textContent = step.label;
+                li.append(dot, label);
+                if (step.detail) {
+                    const d = document.createElement('p');
+                    d.className = 'text-xs text-slate-500';
+                    d.textContent = step.detail;
+                    li.appendChild(d);
+                }
+                list.appendChild(li);
+            });
+
+            document.getElementById('apCvLink').href = CV_URL.replace('__ID__', encodeURIComponent(a.id));
+            const report = document.getElementById('apReportLink');
+            report.href = REPORT_URL.replace('__ID__', encodeURIComponent(a.id));
+            // report only after the test: submitted, or ended early for violations
+            report.classList.toggle('hidden', !(a.exam_submit || a.final_status === 'VIOLATED'));
+            document.getElementById('apImageBtn').classList.toggle('hidden', !canShowFace(a));
+
+            document.querySelectorAll('.app-row').forEach(tr => tr.classList.toggle('bg-blue-100', tr.dataset.id === id));
+            document.getElementById('appPanelOverlay').hidden = false;
+            const panel = document.getElementById('appPanel');
+            panel.classList.remove('translate-x-full');
+            panel.setAttribute('aria-hidden', 'false');
+        }
+
+        // ---------- Change decision ----------
+        let pendingDecision = null;   // { id, action: 'SELECT' | 'REJECT' }
+
+        function renderDecisionActions(a) {
+            const box = document.getElementById('apDecisionActions');
+            box.innerHTML = '';
+            if (!a.is_final) {
+                const note = document.createElement('p');
+                note.className = 'text-xs text-slate-500 mr-auto';
+                note.textContent = 'The decision can be changed once processing is complete.';
+                box.appendChild(note);
+                return;
+            }
+            const label = document.createElement('span');
+            label.className = 'text-xs font-semibold text-slate-500 mr-auto';
+            label.textContent = 'Change decision:';
+            box.appendChild(label);
+
+            if (a.final_status !== 'SELECTED') box.appendChild(decisionButton(a.id, 'SELECT'));
+            if (a.final_status !== 'REJECTED') box.appendChild(decisionButton(a.id, 'REJECT'));
+        }
+
+        function decisionButton(id, action) {
+            const select = action === 'SELECT';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors flex items-center ' +
+                (select ? 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
+                        : 'text-rose-700 border-rose-200 bg-rose-50 hover:bg-rose-100');
+            btn.innerHTML = select ? '<i class="fa-solid fa-check mr-1.5"></i>' : '<i class="fa-solid fa-xmark mr-1.5"></i>';
+            btn.append(select ? 'Mark as Selected' : 'Mark as Rejected');
+            btn.onclick = () => openDecisionModal(id, action);
+            return btn;
+        }
+
+        function openDecisionModal(id, action) {
+            const a = APPS[id];
+            if (!a) return;
+            pendingDecision = { id, action };
+            const select = action === 'SELECT';
+            const from = titleCase(a.final_status);
+            const to = select ? 'Selected' : 'Rejected';
+            const who = a.name || ('candidate ' + a.id);
+
+            document.getElementById('dmIcon').className = 'w-14 h-14 rounded-full flex items-center justify-center mb-3 border ' +
+                (select ? 'bg-emerald-100 border-emerald-200' : 'bg-rose-100 border-rose-200');
+            document.getElementById('dmIcon').innerHTML = select
+                ? '<i class="fa-solid fa-user-check text-emerald-600 text-2xl"></i>'
+                : '<i class="fa-solid fa-user-xmark text-rose-600 text-2xl"></i>';
+            document.getElementById('dmTitle').textContent = 'Change decision to ' + to + '?';
+            document.getElementById('dmMessage').textContent =
+                'Are you sure you want to change the decision for ' + who + ' (' + a.id + ') from ' + from + ' to ' + to + '?';
+
+            // extra caution when overturning a rejection
+            const warning = document.getElementById('dmWarning');
+            if (select && a.final_status === 'REJECTED') {
+                warning.textContent = a.stage === 'CV Rejected'
+                    ? 'This candidate was rejected at CV screening and has not taken the interview.'
+                    : 'This candidate was rejected based on the interview result' +
+                      (a.exam_score && a.exam_score !== 'N/A' ? ' (score ' + a.exam_score + ')' : '') + '.';
+                warning.hidden = false;
+            } else {
+                warning.hidden = true;
+            }
+
+            document.getElementById('dmEmailNote').textContent = (select
+                ? 'A congratulations email will be sent to '
+                : 'A rejection email will be sent to ') + (a.email || 'the candidate') + '.';
+
+            const btn = document.getElementById('dmConfirmBtn');
+            btn.className = 'px-5 py-2 text-sm font-bold text-white rounded-lg transition-colors flex items-center disabled:opacity-60 disabled:cursor-not-allowed ' +
+                (select ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700');
+            btn.disabled = false;
+            document.getElementById('dmConfirmLabel').textContent = 'Yes, mark as ' + to;
+            document.getElementById('dmError').hidden = true;
+
+            const modal = document.getElementById('decisionModal');
+            modal.classList.remove('hidden');
+            btn.focus();
+        }
+
+        function closeDecisionModal() {
+            document.getElementById('decisionModal').classList.add('hidden');
+            pendingDecision = null;
+        }
+
+        function confirmDecisionChange() {
+            if (!pendingDecision) return;
+            const { id, action } = pendingDecision;
+            const btn = document.getElementById('dmConfirmBtn');
+            const err = document.getElementById('dmError');
+            btn.disabled = true;
+            document.getElementById('dmConfirmLabel').textContent = 'Updating…';
+            err.hidden = true;
+
+            fetch('/update-status', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ candidate_id: id, action: action })
+            }).then(res => res.json().catch(() => ({})).then(data => {
+                if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+                return data;
+            })).then(data => {
+                // reload so every column reflects the new decision, then reopen this candidate
+                try { sessionStorage.setItem('applicationsFlash', JSON.stringify({ id, message: data.message || 'Decision updated.' })); } catch (e) { }
+                location.reload();
+            }).catch(e => {
+                console.error(e);
+                err.textContent = 'Could not update the decision: ' + e.message;
+                err.hidden = false;
+                btn.disabled = false;
+                document.getElementById('dmConfirmLabel').textContent = 'Try again';
+            });
+        }
+
+        // ---- Interview rounds ----
+        let pendingRound = null;   // { id, round_no, action: 'PASS' | 'REJECT' | 'UNDO', name }
+        const ROUND_STYLE = {
+            passed:   { icon: 'fa-circle-check text-emerald-500', text: 'text-slate-800', tag: 'Passed' },
+            failed:   { icon: 'fa-circle-xmark text-rose-500',    text: 'text-slate-800', tag: 'Rejected' },
+            current:  { icon: 'fa-circle-dot text-blue-600',      text: 'text-blue-800',  tag: 'Current' },
+            upcoming: { icon: 'fa-circle text-slate-300',         text: 'text-slate-500', tag: 'Upcoming' },
+            skipped:  { icon: 'fa-circle-minus text-slate-300',   text: 'text-slate-400', tag: 'Not reached' }
+        };
+
+        function renderRounds(a) {
+            const rp = a.rounds;
+            const list = document.getElementById('apRounds');
+            list.replaceChildren();
+            document.getElementById('apRoundSummary').textContent = rp.summary || '';
+            cancelRoundDecision();
+            document.getElementById('rfError').hidden = true;
+
+            rp.rounds.forEach(r => {
+                const st = ROUND_STYLE[r.state] || ROUND_STYLE.upcoming;
+                const li = document.createElement('li');
+                li.className = 'round-item flex items-start gap-2 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300' +
+                    (r.state === 'current' ? ' bg-blue-50' : '');
+                li.tabIndex = 0;
+                li.setAttribute('role', 'button');
+                li.title = 'View round details';
+                li.onclick = e => { if (!e.target.closest('button')) openRoundModal(a, r); };
+                li.onkeydown = e => {
+                    if ((e.key === 'Enter' || e.key === ' ') && e.target === li) { e.preventDefault(); openRoundModal(a, r); }
+                };
+                const icon = document.createElement('i');
+                icon.className = 'fa-solid ' + st.icon + ' mt-0.5';
+                const body = document.createElement('div');
+                body.className = 'min-w-0 flex-1';
+
+                const title = document.createElement('p');
+                title.className = 'text-sm font-bold ' + st.text;
+                title.textContent = r.position + '. ' + r.name + (r.is_assessment ? ' (Assessment)' : '');
+                const tag = document.createElement('span');
+                tag.className = 'ml-1.5 text-[11px] font-semibold text-slate-500';
+                tag.textContent = '· ' + (r.state === 'current' && !r.is_assessment
+                    ? (!r.schedule ? 'Not scheduled' : r.schedule.status === 'SUBMITTED' ? 'Approval pending' : 'Interview scheduled')
+                    : st.tag);
+                if (r.state === 'current' && r.schedule && r.schedule.status === 'SUBMITTED') tag.className += ' !text-amber-700';
+                title.appendChild(tag);
+                body.appendChild(title);
+
+                const detail = [];
+                if (r.is_assessment) {
+                    if (r.state === 'current') detail.push(r.note || 'In progress');
+                    if (a.exam_score && a.exam_score !== 'N/A') detail.push('Score ' + a.exam_score);
+                } else if (r.result) {
+                    if (r.result.marks !== null) detail.push('Marks ' + r.result.marks + (r.max_marks !== null ? ' / ' + r.max_marks : ''));
+                    if (r.result.decided_by) detail.push('by ' + r.result.decided_by);
+                    if (r.result.decided_at) detail.push(r.result.decided_at);
+                } else if (r.schedule && r.state === 'current' && r.schedule.status === 'SUBMITTED' && r.schedule.scores) {
+                    const sc = r.schedule.scores;
+                    detail.push(r.schedule.interviewer_name + ' recommends ' + (sc.recommendation === 'PASSED' ? 'Pass' : 'Reject') +
+                        (sc.marks !== undefined && sc.marks !== null ? ' · ' + sc.marks + (r.max_marks !== null ? ' / ' + r.max_marks : '') : ''));
+                } else if (r.schedule && r.state === 'current') {
+                    detail.push('Interview ' + r.schedule.when.split(' - ')[0] + ' with ' + r.schedule.interviewer_name);
+                } else if (r.max_marks !== null) {
+                    detail.push('Out of ' + r.max_marks + ' marks');
+                }
+                if (detail.length) {
+                    const d = document.createElement('p');
+                    d.className = 'text-xs text-slate-500';
+                    d.textContent = detail.join(' · ');
+                    body.appendChild(d);
+                }
+                if (r.result && r.result.remarks) {
+                    const rm = document.createElement('p');
+                    rm.className = 'text-xs text-slate-600 italic break-words';
+                    rm.textContent = '"' + r.result.remarks + '"';
+                    body.appendChild(rm);
+                }
+                li.append(icon, body);
+
+                if (rp.undoable_round === r.number) {
+                    const undo = document.createElement('button');
+                    undo.type = 'button';
+                    undo.className = 'text-[11px] font-bold text-blue-700 hover:text-blue-900 shrink-0';
+                    undo.textContent = 'Undo';
+                    undo.title = 'Undo this round decision';
+                    undo.onclick = () => askRoundUndo(a, r);
+                    li.appendChild(undo);
+                }
+                const chev = document.createElement('i');
+                chev.className = 'fa-solid fa-chevron-right text-[10px] text-slate-400 mt-1.5 shrink-0';
+                li.appendChild(chev);
+                list.appendChild(li);
+            });
+
+            renderSchedule(a);
+
+            // decision form only for the current non-assessment round
+            const form = document.getElementById('apRoundForm');
+            form.classList.toggle('hidden', !rp.can_decide);
+            if (rp.can_decide) {
+                const cur = rp.current;
+                const curRound = rp.rounds.find(x => x.number === cur.number);
+                const sch = curRound && curRound.schedule;
+                // interviewer's scorecard is in: the form approves (or overrides) their recommendation
+                const rec = sch && sch.status === 'SUBMITTED' && sch.scores ? sch.scores : null;
+                document.getElementById('rfLead').textContent = rec ? 'Your decision for'
+                    : sch ? 'Or record the result yourself for' : 'Decision for';
+                document.getElementById('rfRoundName').textContent = cur.name;
+                document.getElementById('rfMax').textContent = cur.max_marks !== null ? '(out of ' + cur.max_marks + ')' : '';
+                const marks = document.getElementById('rfMarks');
+                marks.value = rec && rec.marks !== undefined && rec.marks !== null ? rec.marks : '';
+                if (cur.max_marks !== null) marks.max = cur.max_marks; else marks.removeAttribute('max');
+                document.getElementById('rfRemarks').value = rec && rec.remarks ? rec.remarks : '';
+                const recPass = rec && rec.recommendation === 'PASSED';
+                document.getElementById('rfPassLabel').textContent = recPass ? 'Approve selection' : (rec ? 'Pass instead' : 'Pass');
+                document.getElementById('rfRejectLabel').textContent = rec && !recPass ? 'Approve rejection' : (rec ? 'Reject instead' : 'Reject');
+            }
+        }
+
+        function showRoundConfirm(text, label, danger) {
+            document.getElementById('rfConfirmText').textContent = text;
+            const btn = document.getElementById('rfConfirmBtn');
+            btn.textContent = label;
+            btn.disabled = false;
+            btn.className = 'px-3 py-1.5 text-xs font-bold text-white rounded-lg disabled:opacity-60 ' +
+                (danger ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700');
+            document.getElementById('rfButtons').classList.add('hidden');
+            document.getElementById('rfConfirm').classList.remove('hidden');
+            btn.focus();
+        }
+
+        function askRoundDecision(action) {
+            const a = APPS[panelAppId];
+            if (!a || !a.rounds.can_decide) return;
+            const err = document.getElementById('rfError');
+            err.hidden = true;
+            const cur = a.rounds.current;
+            const marksVal = document.getElementById('rfMarks').value.trim();
+            if (marksVal !== '') {
+                const m = Number(marksVal);
+                if (!isFinite(m) || m < 0 || (cur.max_marks !== null && m > cur.max_marks)) {
+                    err.textContent = 'Marks must be between 0 and ' + (cur.max_marks !== null ? cur.max_marks : 'the round maximum') + '.';
+                    err.hidden = false;
+                    return;
+                }
+            }
+            pendingRound = { id: a.id, round_no: cur.number, action, name: cur.name };
+            const who = a.name || ('candidate ' + a.id);
+            const next = a.rounds.rounds.find(r => r.position === cur.position + 1);
+            if (action === 'PASS') {
+                showRoundConfirm('Mark ' + who + ' as passed in ' + cur.name + '? ' +
+                    (next ? 'They will move to ' + next.name + '.' : 'This is the last round, so all rounds will be cleared.') +
+                    ' A "' + cur.name + ' Round Cleared" email will be sent to the candidate.',
+                    'Yes, pass & email', false);
+            } else {
+                showRoundConfirm('Reject ' + who + ' in ' + cur.name + '? Later rounds will be skipped.', 'Yes, reject', true);
+            }
+        }
+
+        function askRoundUndo(a, r) {
+            pendingRound = { id: a.id, round_no: r.number, action: 'UNDO', name: r.name };
+            document.getElementById('apRoundForm').classList.add('hidden');
+            showRoundConfirm('Undo the ' + (r.state === 'passed' ? 'pass' : 'rejection') + ' recorded for ' + r.name +
+                '? The candidate goes back to that round.', 'Yes, undo', true);
+        }
+
+        function cancelRoundDecision() {
+            pendingRound = null;
+            document.getElementById('rfConfirm').classList.add('hidden');
+            document.getElementById('rfButtons').classList.remove('hidden');
+            const a = APPS[panelAppId];
+            if (a) document.getElementById('apRoundForm').classList.toggle('hidden', !a.rounds.can_decide);
+        }
+
+        function submitRoundDecision() {
+            if (!pendingRound) return;
+            const { id, round_no, action } = pendingRound;
+            const btn = document.getElementById('rfConfirmBtn');
+            const err = document.getElementById('rfError');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            err.hidden = true;
+            fetch('/round-decision', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candidate_id: id, round_no, action,
+                    marks: action === 'UNDO' ? null : document.getElementById('rfMarks').value.trim(),
+                    remarks: action === 'UNDO' ? '' : document.getElementById('rfRemarks').value.trim()
+                })
+            }).then(readJson).then(({ ok, data }) => {
+                if (!ok) throw new Error(data.message || 'Could not save the round decision.');
+                // reload so the list and panel reflect the new round, then reopen this candidate
+                try { sessionStorage.setItem('applicationsFlash', JSON.stringify({ id, message: data.message || 'Round decision saved.' })); } catch (e) { }
+                location.reload();
+            }).catch(e => {
+                err.textContent = e.message;
+                err.hidden = false;
+                btn.disabled = false;
+                btn.textContent = 'Try again';
+            });
+        }
+
+        // ---- Interview schedule (current non-assessment round) ----
+        function currentInterviewRound(a) {
+            const rp = a && a.rounds;
+            if (!rp || !rp.can_decide) return null;
+            return rp.rounds.find(x => x.number === rp.current.number) || null;
+        }
+
+        function renderSchedule(a) {
+            const box = document.getElementById('apSchedule');
+            const r = currentInterviewRound(a);
+            box.classList.toggle('hidden', !r);
+            document.getElementById('schForm').classList.add('hidden');
+            document.getElementById('schCancelConfirm').classList.add('hidden');
+            document.getElementById('schError').hidden = true;
+            const view = document.getElementById('schView');
+            view.classList.remove('hidden');
+            if (!r) { view.innerHTML = ''; return; }
+            const s = r.schedule;
+            if (!s) {
+                view.innerHTML = '<div class="flex items-center justify-between gap-2">' +
+                    '<p class="text-xs text-slate-500">No interview scheduled for ' + esc(r.name) + ' yet.</p>' +
+                    '<button type="button" onclick="openScheduleForm()" class="shrink-0 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center">' +
+                    '<i class="fa-regular fa-calendar-plus mr-1.5"></i> Schedule interview</button></div>';
+                return;
+            }
+            if (s.status === 'SUBMITTED' && s.scores) {
+                // interviewer's scorecard is in; nothing reaches the candidate until it is approved below
+                const sc = s.scores, pass = sc.recommendation === 'PASSED';
+                const crit = (sc.criteria || []).map(c =>
+                    '<div class="flex justify-between gap-2"><span class="text-slate-600 truncate">' + esc(c.name) + '</span>' +
+                    '<span class="font-bold tabular-nums ' + (c.rating >= 4 ? 'text-emerald-700' : c.rating >= 3 ? 'text-slate-800' : 'text-rose-700') + '">' + esc(c.rating) + ' / 5</span></div>').join('');
+                view.innerHTML =
+                    '<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5">' +
+                    '<p class="text-xs font-bold text-amber-800 mb-1.5"><i class="fa-solid fa-user-check mr-1"></i>Scorecard submitted - waiting for your approval</p>' +
+                    '<div class="flex items-center flex-wrap gap-2 mb-2">' +
+                    '<span class="px-2 py-0.5 text-[11px] font-bold rounded-full border ' +
+                    (pass ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-rose-100 text-rose-800 border-rose-200') + '">' +
+                    esc(s.interviewer_name) + ' recommends: ' + (pass ? 'Move to next round' : 'Reject') + '</span>' +
+                    (sc.marks !== undefined && sc.marks !== null ? '<span class="text-sm font-black text-slate-800 tabular-nums">' + esc(sc.marks) +
+                        (r.max_marks !== null ? '<span class="text-xs text-slate-500"> / ' + esc(r.max_marks) + '</span>' : '') + '</span>' : '') +
+                    '</div>' +
+                    (crit ? '<div class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs mb-2">' + crit + '</div>' : '') +
+                    (sc.remarks ? '<p class="text-xs text-slate-700 italic break-words mb-1">"' + esc(sc.remarks) + '"</p>' : '') +
+                    '<p class="text-[11px] text-slate-500">Interview ' + esc(s.when) + (s.submitted_at ? ' · submitted ' + esc(s.submitted_at) : '') + '</p>' +
+                    '<p class="text-[11px] font-semibold text-amber-800 mt-1.5">The candidate is not emailed until you approve. Use the buttons below.</p>' +
+                    '</div>';
+                return;
+            }
+            const link = s.mode === 'ONLINE' && /^https?:\/\//i.test(s.location)
+                ? '<a href="' + esc(s.location) + '" target="_blank" rel="noopener" class="text-blue-700 font-semibold hover:underline break-all">' + esc(s.location) + '</a>'
+                : esc(s.location);
+            view.innerHTML =
+                '<div class="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5">' +
+                '<p class="text-xs font-bold text-blue-800 mb-1.5"><i class="fa-regular fa-calendar-check mr-1"></i>' + esc(r.name) + ' interview scheduled</p>' +
+                '<dl class="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-y-1 text-xs">' +
+                '<dt class="font-bold text-slate-500">When</dt><dd class="text-slate-800">' + esc(s.when) + '</dd>' +
+                '<dt class="font-bold text-slate-500">Mode</dt><dd class="text-slate-800">' + esc(s.mode_label) + '</dd>' +
+                '<dt class="font-bold text-slate-500">' + (s.mode === 'ONLINE' ? 'Link' : 'Venue') + '</dt><dd class="text-slate-800">' + link + '</dd>' +
+                '<dt class="font-bold text-slate-500">Interviewer</dt><dd class="text-slate-800 break-all">' + esc(s.interviewer_name) + ' · ' + esc(s.interviewer_email) + '</dd>' +
+                (s.link_expired ? '<dt class="font-bold text-slate-500">Scorecard</dt><dd class="text-amber-700 font-semibold">Link expired - reschedule or record the result below</dd>'
+                    : '<dt class="font-bold text-slate-500">Scorecard</dt><dd class="text-slate-600">Waiting for the interviewer</dd>') +
+                '</dl>' +
+                '<div class="mt-2.5 flex flex-wrap justify-end gap-2">' +
+                (s.scorecard_url && !s.link_expired ? '<button type="button" id="schCopyBtn" onclick="copyScorecardLink()" class="px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-white border border-blue-200 rounded-lg hover:bg-blue-50"><i class="fa-regular fa-copy mr-1"></i>Copy scorecard link</button>' : '') +
+                '<button type="button" onclick="openScheduleForm(true)" class="px-2.5 py-1 text-[11px] font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"><i class="fa-solid fa-pen mr-1"></i>Reschedule</button>' +
+                '<button type="button" onclick="askCancelSchedule()" class="px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-white border border-rose-200 rounded-lg hover:bg-rose-50"><i class="fa-solid fa-xmark mr-1"></i>Cancel</button>' +
+                '</div></div>';
+        }
+
+        function syncScheduleMode() {
+            const online = document.getElementById('schMode').value === 'ONLINE';
+            document.getElementById('schLocationLabel').textContent = online ? 'Meeting link' : 'Venue';
+            document.getElementById('schLocation').placeholder = online ? 'https://meet.google.com/...' : 'Office address, floor, room';
+        }
+
+        function openScheduleForm(reschedule) {
+            const a = APPS[panelAppId], r = currentInterviewRound(a);
+            if (!r) return;
+            const s = r.schedule || {};
+            const pad = n => String(n).padStart(2, '0');
+            const tomorrow = new Date(Date.now() + 86400000);
+            document.getElementById('schFormTitle').textContent = (reschedule ? 'Reschedule ' : 'Schedule ') + r.name + ' interview';
+            document.getElementById('schDate').value = s.date || (tomorrow.getFullYear() + '-' + pad(tomorrow.getMonth() + 1) + '-' + pad(tomorrow.getDate()));
+            const today = new Date();
+            document.getElementById('schDate').min = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
+            document.getElementById('schTime').value = s.time || '11:00';
+            document.getElementById('schDuration').value = String(s.duration || 45);
+            document.getElementById('schMode').value = s.mode || 'ONLINE';
+            document.getElementById('schLocation').value = s.location || '';
+            document.getElementById('schIName').value = s.interviewer_name || '';
+            document.getElementById('schIEmail').value = s.interviewer_email || '';
+            document.getElementById('schNote').value = s.note || '';
+            document.getElementById('schSaveBtn').textContent = reschedule ? 'Save & notify' : 'Schedule & send invites';
+            document.getElementById('schSaveBtn').disabled = false;
+            syncScheduleMode();
+            document.getElementById('schView').classList.add('hidden');
+            document.getElementById('schCancelConfirm').classList.add('hidden');
+            document.getElementById('schError').hidden = true;
+            document.getElementById('schForm').classList.remove('hidden');
+            document.getElementById('schDate').focus();
+        }
+
+        function closeScheduleForm() { renderSchedule(APPS[panelAppId]); }
+
+        function askCancelSchedule() {
+            document.getElementById('schView').classList.add('hidden');
+            document.getElementById('schCancelConfirm').classList.remove('hidden');
+            document.getElementById('schCancelBtn').disabled = false;
+            document.getElementById('schCancelBtn').focus();
+        }
+
+        function postSchedule(payload, btn, busyLabel, loading) {
+            const err = document.getElementById('schError');
+            err.hidden = true;
+            const label = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = busyLabel;
+            showActionLoading(loading.title, loading.text, loading.icon);
+            return fetch('/schedule-round', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(readJson).then(({ ok, data }) => {
+                if (!ok) throw new Error(data.message || 'Could not save the interview.');
+                try { sessionStorage.setItem('applicationsFlash', JSON.stringify({ id: payload.candidate_id, message: data.message })); } catch (e) { }
+                location.reload();
+            }).catch(e => {
+                hideActionLoading();
+                err.textContent = e.message;
+                err.hidden = false;
+                btn.disabled = false;
+                btn.textContent = label;
+            });
+        }
+
+        function submitSchedule() {
+            const a = APPS[panelAppId], r = currentInterviewRound(a);
+            if (!r) return;
+            const v = id => document.getElementById(id).value.trim();
+            const err = document.getElementById('schError');
+            const mode = v('schMode');
+            const problem = !v('schDate') || !v('schTime') ? 'Choose the date and time.'
+                : !v('schLocation') ? (mode === 'ONLINE' ? 'Enter the meeting link.' : 'Enter the venue.')
+                : !v('schIName') ? "Enter the interviewer's name."
+                : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('schIEmail')) ? 'Enter a valid interviewer email.' : '';
+            if (problem) { err.textContent = problem; err.hidden = false; return; }
+            const reschedule = !!(r.schedule && r.schedule.status === 'SCHEDULED');
+            postSchedule({
+                candidate_id: a.id, round_no: r.number, action: 'SCHEDULE',
+                date: v('schDate'), time: v('schTime'), duration: +v('schDuration'), mode,
+                location: v('schLocation'), interviewer_name: v('schIName'), interviewer_email: v('schIEmail'), note: v('schNote')
+            }, document.getElementById('schSaveBtn'), 'Saving...', {
+                title: (reschedule ? 'Rescheduling' : 'Scheduling') + ' the ' + r.name + ' interview...',
+                text: 'Saving the interview and emailing ' + (a.name || 'the candidate') + ' and ' + v('schIName') + '.'
+            });
+        }
+
+        function cancelSchedule() {
+            const a = APPS[panelAppId], r = currentInterviewRound(a);
+            if (!r) return;
+            postSchedule({ candidate_id: a.id, round_no: r.number, action: 'CANCEL' },
+                document.getElementById('schCancelBtn'), 'Cancelling...', {
+                    title: 'Cancelling the ' + r.name + ' interview...',
+                    text: 'Updating the interview and emailing the candidate and the interviewer.',
+                    icon: 'fa-calendar-xmark'
+                });
+        }
+
+        function copyScorecardLink() {
+            const r = currentInterviewRound(APPS[panelAppId]);
+            const url = r && r.schedule && r.schedule.scorecard_url;
+            if (!url) return;
+            const btn = document.getElementById('schCopyBtn');
+            const done = () => { btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i>Copied'; setTimeout(() => renderSchedule(APPS[panelAppId]), 1500); };
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(done).catch(() => window.prompt('Copy the scorecard link:', url));
+            } else {
+                window.prompt('Copy the scorecard link:', url);
+            }
+        }
+
+        // ---- Round details modal ----
+        const ROUND_STATE_TONE = {
+            passed: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+            failed: 'bg-rose-100 text-rose-800 border-rose-200',
+            current: 'bg-sky-100 text-sky-800 border-sky-200',
+            upcoming: 'bg-slate-100 text-slate-700 border-slate-200',
+            skipped: 'bg-slate-100 text-slate-500 border-slate-200'
+        };
+        let roundReq = 0;
+
+        function esc(v) {
+            return String(v === null || v === undefined ? '' : v).replace(/[&<>"']/g,
+                ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        }
+        function rmSection(title, inner) {
+            return '<section class="bg-white rounded-xl border border-slate-200 p-4">' +
+                '<h4 class="text-[11px] font-extrabold text-blue-800 tracking-widest mb-3">' + esc(title) + '</h4>' + inner + '</section>';
+        }
+        function rmTile(label, value, tone) {
+            return '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">' +
+                '<p class="text-[10px] font-bold text-slate-500 tracking-wider">' + esc(label) + '</p>' +
+                '<p class="text-sm font-black ' + (tone || 'text-slate-800') + '">' + esc(value) + '</p></div>';
+        }
+        function rmRows(rows) {
+            return '<dl class="grid grid-cols-3 gap-x-3 gap-y-1.5 text-sm">' + rows.map(([k, v, tone]) =>
+                '<dt class="text-xs font-bold text-slate-500">' + esc(k) + '</dt>' +
+                '<dd class="col-span-2 ' + (tone || 'text-slate-800') + '">' + esc(v || '—') + '</dd>').join('') + '</dl>';
+        }
+        function rmBar(pct) {
+            const tone = pct >= 60 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-500';
+            return '<div class="h-2.5 rounded-full bg-slate-200 overflow-hidden"><div class="h-full ' + tone +
+                '" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>';
+        }
+        function rmNote(text, icon) {
+            return '<p class="text-sm text-slate-600 flex items-start"><i class="fa-solid ' + (icon || 'fa-circle-info') +
+                ' text-slate-400 mr-2 mt-0.5"></i><span>' + esc(text) + '</span></p>';
+        }
+
+        function openRoundModal(a, r) {
+            const st = ROUND_STYLE[r.state] || ROUND_STYLE.upcoming;
+            document.getElementById('rmKicker').textContent = 'Round ' + r.position + ' of ' + a.rounds.total +
+                (r.is_assessment ? ' · Online assessment' : ' · Interview round');
+            document.getElementById('rmTitle').textContent = r.name;
+            document.getElementById('rmWho').textContent = (a.name || 'Unnamed candidate') + ' (' + a.id + ')';
+            const badge = document.getElementById('rmState');
+            badge.className = 'px-2.5 py-1 inline-flex text-[11px] font-bold rounded-full border ' + (ROUND_STATE_TONE[r.state] || ROUND_STATE_TONE.upcoming);
+            badge.textContent = st.tag;
+            const body = document.getElementById('rmBody');
+            body.innerHTML = '<div class="flex items-center justify-center py-10 text-slate-500 text-sm">' +
+                '<span class="w-6 h-6 border-[3px] border-slate-200 border-t-blue-600 rounded-full animate-spin mr-3"></span>Loading round details...</div>';
+            const modal = document.getElementById('roundModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+
+            const req = ++roundReq;
+            fetch('/round-details/' + encodeURIComponent(a.id) + '/' + r.number)
+                .then(readJson).then(({ ok, data }) => {
+                    if (req !== roundReq) return;
+                    if (!ok) throw new Error(data.message || 'Could not load the round details.');
+                    body.innerHTML = r.is_assessment ? renderAssessmentDetails(a, r, data) : renderInterviewRoundDetails(a, r, data);
+                }).catch(e => {
+                    if (req !== roundReq) return;
+                    body.innerHTML = '<p class="text-sm font-semibold text-rose-600 py-6 text-center">' + esc(e.message) + '</p>';
+                });
+        }
+
+        function closeRoundModal() {
+            roundReq++;
+            const modal = document.getElementById('roundModal');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        }
+
+        function renderAssessmentDetails(a, r, data) {
+            const info = data.round, p = data.performance;
+            const c = info.criteria || {};
+            const criteria = c.pass
+                ? ['Pass ' + c.pass + '% and above',
+                   (c.pending_min && c.pending_max) ? 'Review ' + c.pending_min + '–' + c.pending_max + '%' : '',
+                   c.fail ? 'Fail ' + c.fail + '% and below' : ''].filter(Boolean).join(' · ')
+                : 'Pass above 50% · Review 40–50% · Fail below 40%';
+            let html = rmSection('Round information', rmRows([
+                ['Type', 'Online assessment (scored automatically)'],
+                ['Questions', info.num_questions ? info.num_questions + ' questions, each scored out of 5' : 'Each answer scored out of 5'],
+                ['Time limit', info.interview_time ? info.interview_time + ' minutes' : ''],
+                ['Criteria', criteria]
+            ]));
+
+            if (!p.taken) {
+                return html + rmSection('Candidate performance',
+                    rmNote(a.cv_status === 'SHORTLISTED' ? 'The candidate has not taken the assessment yet.'
+                        : 'The candidate was not shortlisted, so the assessment was not taken.', 'fa-hourglass-half'));
+            }
+
+            const pct = p.score_percent;
+            const violated = a.final_status === 'VIOLATED';
+            html += rmSection('Candidate performance',
+                (pct !== null
+                    ? '<div class="flex items-end justify-between mb-2"><div><p class="text-3xl font-black text-slate-800">' + pct +
+                      '<span class="text-lg text-slate-500">%</span></p><p class="text-xs text-slate-500">Score ' + esc(p.total_score) + ' of ' + esc(p.max_score) +
+                      '</p></div><span class="px-2.5 py-1 text-[11px] font-bold rounded-full border ' +
+                      (DECISION_TONE[a.final_status] || DECISION_TONE['NOT APPEARED']) + '">' + esc(titleCase(a.final_status)) + '</span></div>' + rmBar(pct)
+                    : rmNote('No questions were recorded for this candidate.')) +
+                '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">' +
+                rmTile('Answered', p.answered + ' / ' + (p.answered + p.skipped), 'text-emerald-700') +
+                rmTile('Skipped', p.skipped, p.skipped ? 'text-amber-700' : 'text-slate-800') +
+                rmTile('Violations', p.violations.length, p.violations.length ? 'text-rose-700' : 'text-slate-800') +
+                rmTile('Time taken', p.duration || '—') + '</div>');
+
+            html += rmSection('Login & submission', rmRows([
+                ['Candidate login', p.login],
+                ['Photo verified', p.photo_verified],
+                ['Exam started', p.started],
+                ['Exam ended', p.ended],
+                ['Submitted', p.submitted],
+                ['How it ended', p.how_ended, violated ? 'text-rose-700 font-bold' : 'text-slate-800']
+            ]));
+
+            if (p.violations.length) {
+                html += rmSection('Proctoring violations (' + p.violations.length + ')',
+                    '<ul class="grid grid-cols-1 sm:grid-cols-2 gap-3">' + p.violations.map((v, i) =>
+                        '<li class="rounded-lg border border-rose-200 bg-rose-50/50 overflow-hidden">' +
+                        (v.has_image ? '<img loading="lazy" alt="Violation evidence" class="w-full aspect-[4/3] object-cover bg-slate-200" src="/violation-snapshot/' + encodeURIComponent(v.id) + '">' : '') +
+                        '<div class="px-3 py-2"><p class="text-sm font-bold text-rose-800">' + (i + 1) + '. ' + esc(v.type) + '</p>' +
+                        '<p class="text-xs text-slate-600 font-semibold tabular-nums"><i class="fa-regular fa-clock mr-1"></i>' + esc(v.time || 'Time not recorded') + '</p>' +
+                        (v.elapsed ? '<p class="text-[11px] text-slate-500 tabular-nums">' + esc(v.elapsed) + '</p>' : '') +
+                        '</div></li>').join('') + '</ul>');
+            }
+
+            if (p.questions.length) {
+                html += rmSection('Question-wise performance', '<ol class="space-y-3">' + p.questions.map((q, i) => {
+                    const s = q.score;
+                    const tone = !q.answered ? 'bg-slate-100 text-slate-600 border-slate-200'
+                        : s >= 3 ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                        : s >= 2 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-rose-100 text-rose-800 border-rose-200';
+                    return '<li class="rounded-lg border border-slate-200 p-3">' +
+                        '<div class="flex items-start justify-between gap-3"><p class="text-sm font-bold text-slate-800">Q' + (i + 1) + '. ' + esc(q.question) + '</p>' +
+                        '<span class="shrink-0 px-2 py-0.5 text-[11px] font-bold rounded-full border ' + tone + '">' +
+                        (q.answered ? esc(s === null ? '—' : s) + ' / 5' : 'Not answered') + '</span></div>' +
+                        (q.answered ? '<p class="mt-1.5 text-xs text-slate-600 whitespace-pre-wrap break-words">' + esc(q.answer) + '</p>' : '') +
+                        '</li>';
+                }).join('') + '</ol>');
+            }
+            return html;
+        }
+
+        function renderInterviewRoundDetails(a, r, data) {
+            const info = data.round, res = data.result, s = data.schedule;
+            let html = rmSection('Round information', rmRows([
+                ['Type', 'Interview round (scored by the interviewer or an admin)'],
+                ['Position', 'Round ' + r.position + ' of ' + a.rounds.total],
+                ['Maximum marks', info.max_marks !== null && info.max_marks !== undefined ? info.max_marks : 'Not set']
+            ]));
+
+            if (s) {
+                html += rmSection('Interview', rmRows([
+                    ['When', s.when],
+                    ['Mode', s.mode_label],
+                    [s.mode === 'ONLINE' ? 'Meeting link' : 'Venue', s.location],
+                    ['Interviewer', s.interviewer_name + ' (' + s.interviewer_email + ')'],
+                    ['Scorecard', s.status === 'COMPLETED' ? (s.scores ? 'Submitted ' + (s.submitted_at || '') + ' and approved' : 'Closed - result recorded by an admin')
+                        : s.status === 'SUBMITTED' ? 'Submitted ' + (s.submitted_at || '') + ' - waiting for your approval'
+                        : s.link_expired ? 'Link expired' : 'Waiting for the interviewer',
+                        s.status === 'COMPLETED' ? 'text-emerald-700 font-semibold' : s.status === 'SUBMITTED' ? 'text-amber-700 font-semibold' : 'text-slate-800']
+                ]));
+            }
+
+            if (!res && s && s.status === 'SUBMITTED' && s.scores) {
+                const sc = s.scores, pass = sc.recommendation === 'PASSED';
+                const pct = sc.marks !== null && sc.marks !== undefined && info.max_marks ? Math.round(sc.marks / info.max_marks * 100) : null;
+                return html + rmSection('Interviewer recommendation',
+                    '<div class="flex items-center gap-2 mb-3"><span class="px-2.5 py-1 text-[11px] font-bold rounded-full border ' +
+                    (pass ? ROUND_STATE_TONE.passed : ROUND_STATE_TONE.failed) + '">' + (pass ? 'Recommends: Move to next round' : 'Recommends: Reject') + '</span>' +
+                    '<span class="text-[11px] font-semibold text-amber-700">Not yet approved</span></div>' +
+                    (sc.marks !== null && sc.marks !== undefined
+                        ? '<div class="flex items-end justify-between mb-2"><p class="text-3xl font-black text-slate-800">' + esc(sc.marks) +
+                          (info.max_marks ? '<span class="text-lg text-slate-500"> / ' + esc(info.max_marks) + '</span>' : '') + '</p>' +
+                          (pct !== null ? '<p class="text-sm font-bold text-slate-500">' + pct + '%</p>' : '') + '</div>' + (pct !== null ? rmBar(pct) : '')
+                        : '') +
+                    '<div class="grid grid-cols-2 gap-2 mt-4">' + (sc.criteria || []).map(c =>
+                        rmTile(c.name, c.rating + ' / 5', c.rating >= 4 ? 'text-emerald-700' : c.rating >= 3 ? 'text-slate-800' : 'text-rose-700')).join('') + '</div>' +
+                    '<div class="mt-4">' + rmRows([['Comments', sc.remarks || 'No comments'], ['Interviewer', s.interviewer_name]]) + '</div>' +
+                    rmNote('Approve or reject this recommendation from the decision form in the panel. The candidate is emailed only after you approve a pass.', 'fa-circle-info'));
+            }
+
+            if (!res) {
+                const msg = r.state === 'current'
+                    ? (s ? 'The interview is scheduled. The result appears here once the interviewer submits the scorecard (or you record it in the panel).'
+                         : 'The candidate is in this round. Schedule the interview, or record the result with the decision form in the panel.')
+                    : r.state === 'skipped' ? 'Not reached - the process ended in an earlier round.'
+                    : 'The candidate has not reached this round yet.';
+                return html + rmSection('Candidate performance', rmNote(msg, r.state === 'current' ? 'fa-hourglass-half' : 'fa-circle-info'));
+            }
+
+            const passed = res.decision === 'PASSED';
+            const marksLine = res.marks !== null
+                ? '<div class="flex items-end justify-between mb-2"><p class="text-3xl font-black text-slate-800">' + esc(res.marks) +
+                  (info.max_marks ? '<span class="text-lg text-slate-500"> / ' + esc(info.max_marks) + '</span>' : '') + '</p>' +
+                  (res.percent !== undefined ? '<p class="text-sm font-bold text-slate-500">' + res.percent + '%</p>' : '') + '</div>' +
+                  (res.percent !== undefined ? rmBar(res.percent) : '')
+                : rmNote('No marks were recorded for this round.');
+            const crit = s && s.scores && s.scores.criteria;
+            const critTiles = crit ? '<div class="grid grid-cols-2 gap-2 mt-4">' +
+                crit.map(c => rmTile(c.name, c.rating + ' / 5', c.rating >= 4 ? 'text-emerald-700' : c.rating >= 3 ? 'text-slate-800' : 'text-rose-700')).join('') + '</div>' : '';
+            html += rmSection('Candidate performance',
+                '<div class="flex items-center gap-2 mb-3"><span class="px-2.5 py-1 text-[11px] font-bold rounded-full border ' +
+                (passed ? ROUND_STATE_TONE.passed : ROUND_STATE_TONE.failed) + '"><i class="fa-solid ' + (passed ? 'fa-check' : 'fa-xmark') + ' mr-1"></i>' +
+                (passed ? 'Passed' : 'Rejected') + '</span></div>' + marksLine + critTiles +
+                '<div class="mt-4">' + rmRows([
+                    ['Remarks', res.remarks || 'No remarks'],
+                    ['Decided by', res.decided_by],
+                    ['Decided on', res.decided_at]
+                ]) + '</div>');
+            return html;
+        }
+
+        // ---- Interview link & account ----
+        const LINK_TONE = {
+            'Used': 'text-emerald-700', 'Not opened yet': 'text-blue-700',
+            'Expired': 'text-rose-700', 'Not issued': 'text-slate-500'
+        };
+        const ACCOUNT_BASE = 'px-2.5 py-1 inline-flex text-[11px] font-bold rounded-full border ';
+
+        function linkRow(label, value, tone) {
+            const dt = document.createElement('dt');
+            dt.className = 'font-bold text-slate-500';
+            dt.textContent = label;
+            const dd = document.createElement('dd');
+            dd.className = 'font-semibold ' + (tone || 'text-slate-800');
+            dd.textContent = value || '—';
+            return [dt, dd];
+        }
+
+        // Parse a JSON reply; turn HTML error pages (404 / 500 / login redirect) into a readable message
+        function readJson(res) {
+            return res.text().then(text => {
+                try { return { ok: res.ok, data: JSON.parse(text) }; }
+                catch (e) {
+                    const msg = res.status === 404
+                        ? 'This feature is not available on the server yet. Please restart the server and reload the page.'
+                        : res.status === 401 || res.redirected
+                            ? 'Your session has expired. Please log in again.'
+                            : 'Server error (' + res.status + '). Please try again.';
+                    return { ok: false, data: { message: msg } };
+                }
+            });
+        }
+
+        function loadLinkStatus(id) {
+            const account = document.getElementById('apAccount');
+            const info = document.getElementById('apLinkInfo');
+            const err = document.getElementById('apLinkError');
+            account.className = ACCOUNT_BASE + 'bg-slate-100 text-slate-500 border-slate-200';
+            account.textContent = 'Loading...';
+            info.replaceChildren();
+            err.hidden = true;
+            askRegenerate(false);
+
+            fetch('/admin/link_status/' + encodeURIComponent(id))
+                .then(readJson)
+                .then(({ ok, data }) => {
+                    if (panelAppId !== id) return;              // moved on to another candidate
+                    if (!ok || data.status !== 'success') throw new Error(data.message || 'Could not load link status.');
+                    account.textContent = 'Account ' + (data.account_active ? 'Active' : 'Inactive');
+                    account.className = ACCOUNT_BASE + (data.account_active
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                        : 'bg-rose-100 text-rose-800 border-rose-200');
+                    info.append(
+                        ...linkRow('Link status', data.link_state, LINK_TONE[data.link_state]),
+                        ...linkRow('Link expires', data.expires_at),
+                    );
+                })
+                .catch(e => {
+                    if (panelAppId !== id) return;
+                    account.textContent = 'Unknown';
+                    err.textContent = e.message || 'Could not load link status.';
+                    err.hidden = false;
+                });
+        }
+
+        function askRegenerate(show) {
+            document.getElementById('apRegenIdle').classList.toggle('hidden', show);
+            document.getElementById('apRegenConfirm').classList.toggle('hidden', !show);
+        }
+
+        function regenerateLink() {
+            const id = panelAppId;
+            const btn = document.getElementById('apRegenGo');
+            btn.disabled = true;
+            btn.textContent = 'Regenerating...';
+            fetch('/admin/regenerate_link/' + encodeURIComponent(id))
+                .then(readJson)
+                .then(({ ok, data }) => {
+                    if (!ok || data.status !== 'success') throw new Error(data.message || 'Failed to regenerate link.');
+                    if (panelAppId !== id) return;
+                    loadLinkStatus(id);                           // refresh status (also resets the buttons)
+                    document.getElementById('apNewLinkInput').value = data.new_link;
+                    document.getElementById('apNewLink').classList.remove('hidden');
+                    copyNewLink();
+                })
+                .catch(e => {
+                    const err = document.getElementById('apLinkError');
+                    err.textContent = e.message || 'Error occurred while regenerating link.';
+                    err.hidden = false;
+                    askRegenerate(false);
+                })
+                .finally(() => { btn.disabled = false; btn.textContent = 'Yes, regenerate'; });
+        }
+
+        function copyNewLink() {
+            const input = document.getElementById('apNewLinkInput');
+            const done = () => showFlash('New interview link copied to clipboard.');
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(input.value).then(done).catch(() => input.select());
+            } else {
+                input.select();
+                try { if (document.execCommand('copy')) done(); } catch (e) { }
+            }
+        }
+
+        function showFlash(message) {
+            const box = document.createElement('div');
+            box.setAttribute('role', 'status');
+            box.className = 'fixed bottom-6 right-6 z-[70] bg-slate-800 text-white text-sm font-bold px-5 py-3 rounded-lg shadow-2xl flex items-center';
+            box.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i>';
+            box.append(message);
+            document.body.appendChild(box);
+            setTimeout(() => box.remove(), 4000);
+        }
+
+        // after a decision change: reopen the candidate and show the result
+        (function restoreAfterDecision() {
+            let flash = null;
+            try {
+                flash = JSON.parse(sessionStorage.getItem('applicationsFlash') || 'null');
+                sessionStorage.removeItem('applicationsFlash');
+            } catch (e) { }
+            if (flash) {
+                showFlash(flash.message);
+                if (APPS[flash.id]) openAppPanel(flash.id);
+            }
+        })();
+
+        // Every candidate who attempted the assessment has a verification photo - show it whatever the result
+        function canShowFace(a) {
+            return !!a.has_face;
+        }
+
+        function previewFace() {
+            const a = APPS[panelAppId];
+            if (!a || !canShowFace(a)) return;
+            document.getElementById('faceImage').src = '/face-preview/' + encodeURIComponent(a.id);
+            const modal = document.getElementById('faceModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+
+        function closeFace() {
+            const modal = document.getElementById('faceModal');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        }
+
+        function closeAppPanel() {
+            document.getElementById('appPanelOverlay').hidden = true;
+            const panel = document.getElementById('appPanel');
+            panel.classList.add('translate-x-full');
+            panel.setAttribute('aria-hidden', 'true');
+            document.querySelectorAll('.app-row').forEach(tr => tr.classList.remove('bg-blue-100'));
+            panelAppId = null;
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            if (!document.getElementById('faceModal').classList.contains('hidden')) closeFace();
+            else if (!document.getElementById('roundModal').classList.contains('hidden')) closeRoundModal();
+            else if (pendingDecision) closeDecisionModal();
+            else if (pendingRound) cancelRoundDecision();
+            else if (panelAppId) closeAppPanel();
+        });
+
+        // apply a ?job= filter passed in the URL (e.g. from the Jobs page)
+        applyFilters();
+
+        // ?candidate=ID (e.g. from the Dashboard) opens that candidate's details and decision
+        (function openFromUrl() {
+            const id = new URLSearchParams(location.search).get('candidate');
+            if (id && APPS[id] && !panelAppId) {
+                openAppPanel(id);
+                const row = document.querySelector('.app-row[data-id="' + CSS.escape(id) + '"]');
+                if (row) row.scrollIntoView({ block: 'center' });
+            }
+        })();
+    </script>
+    <!-- Action loading screen: shown while an interview is scheduled / rescheduled / cancelled
+         (saving and emailing can take a few seconds); stays up until the page reloads -->
+    <div id="actionLoading" role="status" aria-live="polite" aria-hidden="true"
+        class="hidden fixed inset-0 z-[95] bg-slate-900/40 backdrop-blur-sm items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 px-8 py-6 flex flex-col items-center text-center max-w-sm mx-4">
+            <div class="relative w-14 h-14 mb-4">
+                <div class="absolute inset-0 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+                <i id="actionLoadingIcon" class="fa-solid fa-calendar-check absolute inset-0 flex items-center justify-center text-blue-600 text-lg"></i>
+            </div>
+            <p id="actionLoadingTitle" class="text-base font-black text-slate-800"></p>
+            <p id="actionLoadingText" class="text-xs font-medium text-slate-500 mt-1"></p>
+            <p class="text-[11px] text-slate-400 mt-3">Please don't close or refresh this page.</p>
+        </div>
+    </div>
+    <script>
+        function showActionLoading(title, text, icon) {
+            const box = document.getElementById('actionLoading');
+            document.getElementById('actionLoadingTitle').textContent = title;
+            document.getElementById('actionLoadingText').textContent = text || '';
+            document.getElementById('actionLoadingIcon').className =
+                'fa-solid ' + (icon || 'fa-calendar-check') + ' absolute inset-0 flex items-center justify-center text-blue-600 text-lg';
+            box.classList.remove('hidden'); box.classList.add('flex');
+            box.setAttribute('aria-hidden', 'false');
+        }
+        function hideActionLoading() {
+            const box = document.getElementById('actionLoading');
+            box.classList.add('hidden'); box.classList.remove('flex');
+            box.setAttribute('aria-hidden', 'true');
+        }
+        // Back button can restore the page from cache with the overlay still up
+        window.addEventListener('pageshow', hideActionLoading);
+    </script>
+    <!-- Page loading screen: shown while a menu option loads (data comes from the DB) -->
+    <div id="navLoading" role="status" aria-live="polite" aria-hidden="true"
+        class="hidden fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-sm items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 px-8 py-6 flex flex-col items-center text-center max-w-xs mx-4">
+            <div class="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+            <p class="text-base font-black text-slate-800">Loading <span id="navLoadingName"></span>...</p>
+            <p class="text-xs font-medium text-slate-500 mt-1">Fetching the latest data, please wait.</p>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const box = document.getElementById('navLoading');
+            let timer = null;
+            function show(name) {
+                document.getElementById('navLoadingName').textContent = name || '';
+                // short delay so very fast loads don't flash the overlay
+                timer = setTimeout(() => {
+                    box.classList.remove('hidden'); box.classList.add('flex');
+                    box.setAttribute('aria-hidden', 'false');
+                }, 150);
+            }
+            function hide() {
+                clearTimeout(timer);
+                box.classList.add('hidden'); box.classList.remove('flex');
+                box.setAttribute('aria-hidden', 'true');
+            }
+            document.addEventListener('click', function (e) {
+                const link = e.target.closest('a.nav-item');
+                if (!link || e.defaultPrevented) return;
+                // let new-tab / modified clicks and in-page links behave normally
+                if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || link.target === '_blank') return;
+                const href = link.getAttribute('href') || '';
+                if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+                const label = link.querySelector('.sidebar-text');
+                show(label ? label.textContent.trim() : '');
+            });
+            // returning with the browser Back button can restore this page from cache: hide it again
+            window.addEventListener('pageshow', hide);
+        })();
+    </script>
+</body>
+
+</html>

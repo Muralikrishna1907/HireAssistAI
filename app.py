@@ -1,34 +1,77 @@
 import socket
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify
+import time
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, g, got_request_exception
 from db.connection import get_connection
-from db.cv_repository import log_event 
+from db.cv_repository import log_event, ensure_violation_snapshot_column, compress_snapshot
 from llm.score_generator import score_with_llm,score_communication_with_llm
 import os
 from flask_cors import CORS
-import inspect
 import base64
 from datetime import datetime, timedelta
 import uuid
 from itsdangerous import URLSafeSerializer, BadSignature
 from gmail.gmail_service import get_gmail_service
 from gmail.gmail_sender import send_rejection_email, _send
+from utils.logger import debug_log, info_log, warning_log, error_log, exception_log, log_duration, short, log_app_urls
 
 SESSION_TIMEOUT = 120  # minutes
 
 app = Flask(__name__)
+
+# The candidate app always runs on this port; exam links sent by email point here too.
+CANDIDATE_APP_PORT = 8001
 app.secret_key = "super_secret_key_123"
+
+# Share one pooled DB connection per request and return it to the pool afterwards
+from db.connection import release_request_connection
+app.teardown_appcontext(release_request_connection)
 serializer = URLSafeSerializer(app.secret_key)
 CORS(app)
+
+
+# ===============================
+# 🔷 REQUEST LOGGING
+#   werkzeug's own per-request lines are turned down to WARNING by utils.logger,
+#   so every request is logged here: METHOD path -> status in N ms [cv_id]
+# ===============================
+@app.before_request
+def _log_request_start():
+    g._request_started = time.perf_counter()
+
+
+@app.after_request
+def _log_request_end(response):
+    try:
+        started = g.get("_request_started")
+        elapsed = f"{(time.perf_counter() - started) * 1000:.0f} ms" if started else "? ms"
+        cv_id = session.get("cv_id")
+        message = (f"{request.method} {request.path} -> {response.status_code} in {elapsed}"
+                   + (f" [cv_id={cv_id}]" if cv_id else "")
+                   + (f" [ip={request.remote_addr}]" if response.status_code >= 400 else ""))
+        if request.path.startswith("/static/"):
+            debug_log(message)
+        elif response.status_code >= 500:
+            error_log(message, exc_info=False)
+        elif response.status_code >= 400:
+            warning_log(message)
+        else:
+            info_log(message)
+    except Exception as e:                      # logging must never break a response
+        debug_log(f"Request logging failed: {e}")
+    return response
+
+
+def _log_unhandled_exception(sender, exception, **extra):
+    exception_log(f"Unhandled exception in {request.method} {request.path} "
+                  f"[cv_id={session.get('cv_id')}]: {exception}")
+
+
+got_request_exception.connect(_log_unhandled_exception, app)
+
 
 # ===============================
 # 🔷 UTILITIES / DEBUG
 # ===============================
-def debug_log(message):
-    frame = inspect.currentframe().f_back
-    filename = inspect.getframeinfo(frame).filename.split('\\')[-1]
-    function_name = frame.f_code.co_name
-    line_number = frame.f_lineno
-    print(f"[DEBUG] {filename}::{function_name}:{line_number} - {message}")
 
 def generate_exam_link(cv_id):
     expiry_time = (datetime.now() + timedelta(hours=48)).timestamp()
@@ -54,8 +97,10 @@ def generate_exam_link(cv_id):
     conn.close()
 
     ip = get_local_ip()
-    port = 8000
+    port = CANDIDATE_APP_PORT
 
+    info_log(f"Exam link generated for cv_id={cv_id} (host {ip}:{port}, valid until "
+             f"{datetime.fromtimestamp(expiry_time).strftime('%Y-%m-%d %H:%M')})")
     return f"https://{ip}:{port}/start_exam/{token}"
 
 def get_local_ip():
@@ -66,20 +111,20 @@ def get_local_ip():
         ip = s.getsockname()[0]
     finally:
         s.close()
+    debug_log(f"Local IP for exam links: {ip}")
     return ip
 
 # ===============================
 # 🔷 DATABASE HELPERS
 # ===============================
 def save_answers_only(responses, cv_id):
-    debug_log(f"Starting save_answers_only for CV_ID: {cv_id}")
+    debug_log(f"Saving {len(responses)} responses for cv_id={cv_id}")
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        debug_log(f"Saving {len(responses)} responses to database")
         for item in responses:
             answered_at = item.get("answered_at") if item.get("user_answer") else None
-            debug_log(f"Inserting response - QUES_ID: {item['id']}, Answer: {item.get('user_answer', '')[:50]}")
+            debug_log(f"Response ques_id={item['id']}: {len(item.get('user_answer', '') or '')} chars")
             cursor.execute(
                 """
                 INSERT INTO RESPONSE_TABLE (ID, QUES_ID, RESPONSE, SCORE, ANSWERED_AT)
@@ -88,9 +133,11 @@ def save_answers_only(responses, cv_id):
                 (cv_id, item["id"], item.get("user_answer", "").strip() or None, answered_at)
             )
         conn.commit()
-        debug_log(f"All responses saved successfully for CV_ID: {cv_id}")
+        answered = sum(1 for item in responses if (item.get("user_answer") or "").strip())
+        info_log(f"Answers submitted: cv_id={cv_id}, {len(responses)} responses saved ({answered} answered, "
+                 f"{len(responses) - answered} blank)")
     except Exception as e:
-        debug_log(f"DB ERROR (insert answers): {str(e)}")
+        error_log(f"Saving answers failed for cv_id={cv_id} ({len(responses)} responses) - rolled back: {e}")
         conn.rollback()
     finally:
         cursor.close()
@@ -109,12 +156,15 @@ def create_or_validate_login(cv_id):
     row = cursor.fetchone()
 
     if not row:
+        warning_log(f"Candidate login failed: unknown cv_id={cv_id}")
         return False, "Invalid ID"
 
     is_logged_in, db_token, last_activity = row
 
     if is_logged_in:
         if last_activity and datetime.now() - last_activity > timedelta(minutes=SESSION_TIMEOUT):
+            info_log(f"Stale session for cv_id={cv_id} (last activity {last_activity}, timeout "
+                     f"{SESSION_TIMEOUT} min) - resetting it")
             cursor.execute("""
                 UPDATE CV_INFO
                 SET IS_LOGGED_IN = FALSE, SESSION_TOKEN = NULL
@@ -122,6 +172,8 @@ def create_or_validate_login(cv_id):
             """, (cv_id,))
             conn.commit()
         else:
+            warning_log(f"Candidate login rejected: session already active for cv_id={cv_id} "
+                        f"(last activity {last_activity})")
             return False, "⚠️ Session already active"
 
     token = str(uuid.uuid4())
@@ -139,10 +191,12 @@ def create_or_validate_login(cv_id):
     cursor.close()
     conn.close()
 
+    info_log(f"Candidate verified and logged in: cv_id={cv_id}, ip={request.remote_addr if request else None}")
     return True, token
 
 def validate_active_session():
     if "cv_id" not in session or "session_token" not in session:
+        debug_log(f"No active candidate session (cv_id in session: {'cv_id' in session})")
         return False
 
     conn = get_connection()
@@ -159,16 +213,20 @@ def validate_active_session():
     conn.close()
 
     if not row:
+        warning_log(f"Session check failed: cv_id={session['cv_id']} not found")
         return False
 
+    if row[0] != session["session_token"]:
+        warning_log(f"Session check failed for cv_id={session['cv_id']}: session token does not match the DB "
+                    f"(logged out, timed out or logged in elsewhere)")
     return row[0] == session["session_token"]
 
 def score_and_update(cv_id):
-    debug_log(f"Starting score_and_update for CV_ID: {cv_id}")
+    info_log(f"Scoring triggered for cv_id={cv_id}")
+    started = time.perf_counter()
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        debug_log("Fetching responses for scoring")
         cursor.execute(
             """
             SELECT r.QUES_ID, r.RESPONSE, q.QUESTION
@@ -179,9 +237,9 @@ def score_and_update(cv_id):
             (cv_id,)
         )
         rows = cursor.fetchall()
-        debug_log(f"Retrieved {len(rows)} responses to score")
+        debug_log(f"Scoring {len(rows)} responses for cv_id={cv_id}")
+        scores = []
         for ques_id, answer, question in rows:
-            debug_log(f"Scoring QUES_ID: {ques_id}")
             # score = score_with_llm(question, answer or "")
             # Step 1: Content Score
             content_score = score_with_llm(question, answer or "")
@@ -189,7 +247,7 @@ def score_and_update(cv_id):
             # Step 2: Communication Score (AFTER content score)
             communication_score = score_communication_with_llm(question, answer or "")
 
-            debug_log(f"Scores for QUES_ID {ques_id} → Content: {content_score}, Communication: {communication_score}")
+            scores.append(content_score)
 
             # Step 3: Update DB
             cursor.execute(
@@ -202,7 +260,8 @@ def score_and_update(cv_id):
                 (content_score, communication_score, cv_id, ques_id)
             )
             
-            debug_log(f"LLM Score for QUES_ID {ques_id}: {content_score}, Communication Score: {communication_score}")
+            debug_log(f"cv_id={cv_id} ques_id={ques_id}: content score={content_score}, "
+                      f"communication score={communication_score}")
             # cursor.execute(
             #     """
             #     UPDATE RESPONSE_TABLE
@@ -212,16 +271,17 @@ def score_and_update(cv_id):
             #     (content_score, cv_id, ques_id)
             # )
         conn.commit()
-        debug_log(f"All scores updated successfully for CV_ID: {cv_id}")
+        info_log(f"Scoring completed for cv_id={cv_id}: {len(rows)} responses scored in "
+                 f"{(time.perf_counter() - started) * 1000:.0f} ms, content scores={scores}")
     except Exception as e:
-        debug_log(f"DB / LLM ERROR: {str(e)}")
+        error_log(f"Scoring failed for cv_id={cv_id} - scores rolled back: {e}")
         conn.rollback()
     finally:
         cursor.close()
         conn.close()
 
 def update_final_status_from_score(cv_id):
-    debug_log(f"Starting update_final_status_from_score for CV_ID: {cv_id}")
+    debug_log(f"Calculating final status for cv_id={cv_id}")
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -249,7 +309,8 @@ def update_final_status_from_score(cv_id):
     else:
         status = "REJECTED"
 
-    debug_log(f"Calculated status for CV_ID {cv_id}: {status} (Percentage: {percentage}%)")
+    info_log(f"Final status for cv_id={cv_id}: {status} (score {total_score} over {total_questions} questions "
+             f"= {percentage:.1f}%)")
 
     cursor.execute("""
         UPDATE CV_INFO
@@ -260,45 +321,38 @@ def update_final_status_from_score(cv_id):
     conn.commit()
 
     # --- EMAIL INITIATION LOGIC WITH LOGGERS ---
-    debug_log(f"Initiating email process for CV_ID {cv_id}...")
     cursor.execute("SELECT EMAIL FROM CV_INFO WHERE ID = %s", (cv_id,))
     candidate = cursor.fetchone()
 
     if candidate and candidate[0]:
         to_email = candidate[0]
-        debug_log(f"Candidate email found: {to_email}. Authenticating Gmail service...")
         
         try:
             # Build the service using the function imported from gmail_service.py
             service = get_gmail_service()
-            debug_log("Gmail service authenticated successfully.")
 
             if status == "REJECTED":
-                debug_log(f"Attempting to send REJECTION email to {to_email}...")
                 send_rejection_email(service, to_email)
-                debug_log("Rejection email dispatch complete.")
-                
+                info_log(f"Assessment rejection email sent: cv_id={cv_id}, to={to_email}")
+
             elif status == "SELECTED":
-                debug_log(f"Attempting to send SELECTION email to {to_email}...")
                 body = "Congratulations! You have passed the assessment and are selected for the next round."
                 _send(service, to_email, "Assessment Results: Selected", body)
-                debug_log("Selection email dispatch complete.")
-                
+                info_log(f"Assessment selection email sent: cv_id={cv_id}, to={to_email}")
+
             else:
-                debug_log(f"Status is {status}. No automated email configured for this status.")
-                
+                info_log(f"No result email for cv_id={cv_id}: status {status} has no automated email")
+
         except Exception as e:
-            debug_log(f"ERROR during email process for {to_email}: {str(e)}")
+            error_log(f"Result email ({status}) failed for cv_id={cv_id}, to={to_email}: {e}")
     else:
-        debug_log(f"WARNING: No email address found in DB for CV_ID {cv_id}. Email process aborted.")
+        warning_log(f"No email address in DB for cv_id={cv_id} - result email ({status}) not sent")
 
     cursor.close()
     conn.close()
-    debug_log(f"Finished update_final_status_from_score for CV_ID: {cv_id}")
     
     
 def get_questions_from_db(cv_id):
-    debug_log(f"Fetching questions for CV_ID: {cv_id}")
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -316,23 +370,21 @@ def get_questions_from_db(cv_id):
         if qid not in seen:
             seen.add(qid)
             questions.append({"id": qid, "text": qtext})
-            debug_log(f"Added question - QUES_ID: {qid}, Text: {qtext[:50]}")
-    debug_log(f"Total questions fetched: {len(questions)}")
+    debug_log(f"Fetched {len(questions)} questions for cv_id={cv_id}: {[q['id'] for q in questions]}")
     cursor.close()
     conn.close()
     return questions
 
 def is_exam_already_completed(cv_id):
-    debug_log(f"Checking exam completion status for CV_ID: {cv_id}")
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT COUNT(*) FROM RESPONSE_TABLE WHERE ID = %s", (cv_id,))
         count = cursor.fetchone()[0]
-        debug_log(f"Exam completion check - Found {count} responses")
+        debug_log(f"Exam completion check for cv_id={cv_id}: {count} saved responses")
         return count > 0
     except Exception as e:
-        debug_log(f"Error checking exam status: {str(e)}")
+        error_log(f"Exam completion check failed for cv_id={cv_id} - treating as not completed: {e}")
         return False
     finally:
         cursor.close()
@@ -343,33 +395,44 @@ def is_exam_already_completed(cv_id):
 # ===============================
 @app.route("/")
 def home():
-    debug_log("Home page accessed")
     error_msg = session.pop("error_msg", None)
-    session.pop("cv_id", None)
-    session.pop("questions", None)
-    session.pop("q_index", None)
-    session.pop("responses", None)
-    session.pop("violation_count", None)
+    if error_msg:
+        debug_log(f"Home page showing error: {error_msg}")
+    # Start from a clean session. Leftovers from an earlier exam in this browser (old session token,
+    # timer, link expiry...) made the next login fail once and only work on the second try.
+    if session:
+        debug_log(f"Clearing leftover session data on the login page: {sorted(session.keys())}")
+    session.clear()
     return render_template("home.html", error_msg=error_msg)
 
 @app.route("/start", methods=["GET", "POST"])
 def start():
-    debug_log("Start route accessed")
-
-    cv_id = session.get("cv_id") or request.form.get("person_id")
+    form_cv_id = (request.form.get("person_id") or "").strip()
+    if request.method == "POST" and form_cv_id:
+        # Manual login from the home page is always a fresh login: never reuse another
+        # (possibly finished) exam's session token, timer or CV ID that is still in the browser.
+        if session:
+            debug_log(f"Fresh login for cv_id={form_cv_id} - clearing earlier session data "
+                      f"(cv_id in session: {session.get('cv_id')})")
+        session.clear()
+    cv_id = session.get("cv_id") or form_cv_id
+    debug_log(f"Start requested: cv_id={cv_id} (from {'session' if session.get('cv_id') else 'form'})")
 
     # 🔥 Enforce expiry
     if "link_expiry" in session:
         if datetime.now().timestamp() > session["link_expiry"]:
+            warning_log(f"Exam link expired for cv_id={cv_id} - start blocked")
             session.clear()
             session["error_msg"] = "⏳ This exam link has expired (48 hours only)"
             return redirect(url_for("home"))
 
     if not cv_id:
+        warning_log("Start requested without a CV ID")
         return "CV ID required"
 
     # 🔥 Check already completed
     if is_exam_already_completed(cv_id):
+        warning_log(f"Start blocked: cv_id={cv_id} has already completed the exam")
         session.clear()
         session["error_msg"] = "⚠️ You have already completed the exam."
         return redirect(url_for("home"))
@@ -379,6 +442,7 @@ def start():
         success, result = create_or_validate_login(cv_id)
 
         if not success:
+            warning_log(f"Candidate verification failed for cv_id={cv_id}: {result}")
             session["error_msg"] = result
             return redirect(url_for("home"))
 
@@ -391,6 +455,7 @@ def start():
     exam_time = get_exam_time_from_job(cv_id)
 
     if not questions:
+        warning_log(f"Start blocked: no questions found for cv_id={cv_id}")
         return f"No questions found for CV_ID {cv_id}"
 
     session["cv_id"] = cv_id
@@ -400,18 +465,24 @@ def start():
     session["responses"] = []
     session["already_saved"] = False
     session["exam_duration"] = exam_time
+    # the timer starts when the first question opens; drop any timer from an earlier exam
+    session.pop("exam_end_time", None)
+    session.pop("photo_verified", None)
 
     conn = get_connection()
     log_event(conn, cv_id, "start_exam")
     conn.close()
 
+    info_log(f"Interview started: cv_id={cv_id}, {len(questions)} questions, duration {exam_time} min")
     return redirect(url_for("start_interview"))
 
 @app.route("/start_exam/<token>")
 def start_exam(token):
+    info_log(f"Exam link opened from ip={request.remote_addr}")
     try:
         data = serializer.loads(token, salt="exam-link")
     except BadSignature:
+        warning_log(f"Invalid or tampered exam link opened from ip={request.remote_addr}")
         return "❌ Invalid or tampered link", 403
 
     cv_id = data.get("cv_id")
@@ -419,11 +490,14 @@ def start_exam(token):
 
     # ✅ Expiry check
     if datetime.utcnow().timestamp() > expiry_time:
+        warning_log(f"Expired exam link opened: cv_id={cv_id}, expired at "
+                    f"{datetime.fromtimestamp(expiry_time).strftime('%Y-%m-%d %H:%M')}, ip={request.remote_addr}")
         return "⏳ Link expired", 403
 
     # 🔥 Get client details
     user_ip = request.remote_addr
     user_agent = request.headers.get("User-Agent")
+    debug_log(f"Exam link for cv_id={cv_id}: ip={user_ip}, user agent={short(user_agent, 120)}")
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -437,16 +511,19 @@ def start_exam(token):
     row = cursor.fetchone()
 
     if not row:
+        warning_log(f"Exam link for unknown cv_id={cv_id} (ip={user_ip})")
         return "❌ Invalid candidate", 403
 
     db_used, db_token, db_ip, db_agent = row
 
     # 🔐 1. Token validation
     if db_token != token:
+        warning_log(f"Outdated exam link for cv_id={cv_id}: token is not the latest issued (ip={user_ip})")
         return "❌ Invalid or old link", 403
 
     # 🔐 2. Single-use check
     if db_used:
+        warning_log(f"Exam link already used for cv_id={cv_id} (ip={user_ip})")
         return "⚠️ Link already used", 403
 
     # 🔐 3. FIRST ACCESS → LOCK DEVICE + IP
@@ -459,10 +536,13 @@ def start_exam(token):
             WHERE ID = %s
         """, (user_ip, user_agent, cv_id))
         conn.commit()
+        info_log(f"Exam link first use for cv_id={cv_id}: locked to ip={user_ip} and this browser")
 
     else:
         # 🔐 4. ENFORCE SAME DEVICE + IP
         if db_ip != user_ip or db_agent != user_agent:
+            warning_log(f"Exam link access denied for cv_id={cv_id}: different device/network "
+                        f"(ip {user_ip} vs locked {db_ip}, same browser: {db_agent == user_agent})")
             return "🚫 Access denied: different device/network detected", 403
 
     cursor.close()
@@ -472,6 +552,7 @@ def start_exam(token):
     success, result = create_or_validate_login(cv_id)
 
     if not success:
+        warning_log(f"Candidate verification failed after exam link for cv_id={cv_id}: {result}")
         session["error_msg"] = result
         return redirect(url_for("home"))
 
@@ -479,51 +560,72 @@ def start_exam(token):
     session["link_expiry"] = expiry_time
     session["session_token"] = result
 
+    info_log(f"Exam link validated for cv_id={cv_id} - redirecting to start")
     return redirect(url_for("start"))
 
 @app.route("/verify")
 def verify():
-    debug_log("Verify route accessed")
     return render_template("verify.html")
 
 # ===============================
 # 🔷 Report Violations
 # ===============================
 
+# Camera frame captured when the AI proctoring flags something (2nd person, no face, ...).
+# It is stored with the violation in the database (EXAM_VIOLATIONS.SNAPSHOT) as a small JPEG.
+def decode_violation_snapshot(cv_id, violation_type, data_url):
+    """data:image/... URL from the exam page -> compressed JPEG bytes, or None."""
+    if not data_url or not str(data_url).startswith("data:image/"):
+        return None
+    try:
+        image_bytes = base64.b64decode(data_url.split(",", 1)[1])
+        if len(image_bytes) > 2 * 1024 * 1024:            # a 480x360 JPEG is ~20 KB; refuse anything huge
+            warning_log(f"Violation snapshot for cv_id={cv_id} too large ({len(image_bytes)} bytes) - not saved")
+            return None
+        return compress_snapshot(image_bytes)
+    except Exception as e:
+        error_log(f"Reading violation snapshot failed for cv_id={cv_id} ({violation_type}): {e}")
+        return None
+
+
 @app.route("/report_violation", methods=["POST"])
 def report_violation():
-    debug_log("Violation report received")
-    data = request.get_json()
-    violation_type = data.get("type")
+    data = request.get_json(silent=True) or {}
+    violation_type = str(data.get("type") or "Unknown")[:100]
     cv_id = session.get("cv_id")
-    debug_log(f"Violation Type: {violation_type}, CV_ID: {cv_id}")
-    
+
     if "cv_id" not in session:
-        debug_log("No CV_ID in session")
+        warning_log(f"Violation report ({violation_type}) without a candidate session - ignored")
         return jsonify({"status": "error"}), 400
+
+    details = str(data.get("details") or "")[:200]
+    snapshot = decode_violation_snapshot(cv_id, violation_type, data.get("snapshot"))
+    if details or snapshot:
+        warning_log(f"Proctoring evidence for cv_id={cv_id}: type={violation_type}"
+                    + (f", details: {details}" if details else "")
+                    + (f", snapshot {len(snapshot)} bytes (stored in EXAM_VIOLATIONS)" if snapshot else ""))
 
     if "violation_count" not in session:
         session["violation_count"] = 0
-        debug_log("Initialized violation_count in session")
 
     session["violation_count"] += 1
     count = session["violation_count"]
-    debug_log(f"Violation count incremented to: {count}")
 
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
-        # Insert violation
+        # Insert violation (with its camera snapshot as evidence)
+        ensure_violation_snapshot_column(cursor)
         cursor.execute("""
-            INSERT INTO EXAM_VIOLATIONS (ID, EVENT_TYPE)
-            VALUES (%s, %s)
-        """, (cv_id, violation_type))
-        debug_log(f"Violation record inserted - Type: {violation_type}")
+            INSERT INTO EXAM_VIOLATIONS (ID, EVENT_TYPE, EVENT_TIME, SNAPSHOT)
+            VALUES (%s, %s, NOW(3), %s)
+        """, (cv_id, violation_type, snapshot))
+        warning_log(f"Violation recorded: cv_id={cv_id}, type={violation_type}, count={count}")
 
         # If 4 or more → terminate
         if count >= 4 and not session.get("already_saved", False):
-            debug_log(f"Violation threshold reached (count: {count}) - terminating exam")
+            warning_log(f"Violation limit reached for cv_id={cv_id} ({count} violations) - terminating interview")
             save_answers_only(session["responses"], cv_id)
 
             cursor.execute("""
@@ -533,10 +635,9 @@ def report_violation():
             """, (cv_id,))
 
             session["already_saved"] = True
-            debug_log("Exam marked as VIOLATED and answers saved")
+            warning_log(f"Interview terminated: cv_id={cv_id}, FINAL_STATUS=VIOLATED after {count} violations")
 
         conn.commit()
-        debug_log(f"Violation report processed successfully - Terminate: {count > 3}")
 
         return jsonify({
             "status": "success",
@@ -545,7 +646,7 @@ def report_violation():
         })
 
     except Exception as e:
-        debug_log(f"Violation error: {str(e)}")
+        error_log(f"Recording violation failed for cv_id={cv_id} (type={violation_type}, count={count}): {e}")
         conn.rollback()
         return jsonify({"status": "error"}), 500
 
@@ -562,10 +663,12 @@ def quiz():
     # 🔥 Enforce link expiry during exam
     if "link_expiry" in session:
         if datetime.now().timestamp() > session["link_expiry"]:
+            warning_log(f"Exam link expired during exam for cv_id={session.get('cv_id')} - session cleared")
             session.clear()
             return redirect(url_for("home"))
-        
+
     if not validate_active_session():
+        warning_log(f"Quiz access without a valid session (cv_id={session.get('cv_id')}) - redirecting home")
         session.clear()
         return redirect(url_for("home"))
     
@@ -587,6 +690,8 @@ def quiz():
     if row and row[0] and row[1]:
         db_ip, db_agent = row
         if db_ip != request.remote_addr or db_agent != request.headers.get("User-Agent"):
+            warning_log(f"Quiz access from a different device/network for cv_id={session['cv_id']} "
+                        f"(ip {request.remote_addr} vs locked {db_ip}) - session cleared")
             session.clear()
             return redirect(url_for("home"))
     
@@ -604,9 +709,8 @@ def quiz():
     cursor.close()
     conn.close()
     
-    debug_log(f"Quiz route accessed - Method: {request.method}")
     if "cv_id" not in session or "questions" not in session:
-        debug_log("Invalid session -> home")
+        warning_log(f"Quiz session has no questions loaded (cv_id={session.get('cv_id')}) - redirecting home")
         return redirect(url_for("home"))
     
     session.setdefault("q_index", 0)
@@ -615,14 +719,14 @@ def quiz():
     
     if "exam_end_time" not in session:
         exam_time = session.get("exam_duration", 30)
-        print("USING EXAM TIME:", exam_time)
         session["exam_end_time"] = (
             datetime.now() + timedelta(minutes=exam_time)
         ).timestamp()
-        debug_log(f"Exam timer started for {exam_time} minutes")
-        
+        info_log(f"Exam timer started for cv_id={session['cv_id']}: {exam_time} minutes")
+
     if datetime.now().timestamp() > session["exam_end_time"]:
-        debug_log("Time expired")
+        info_log(f"Exam time expired for cv_id={session['cv_id']} - submitting "
+                 f"{len(session['responses'])} answers (already saved: {session['already_saved']})")
         if not session["already_saved"]:
             save_answers_only(session["responses"], session["cv_id"])
             score_and_update(session["cv_id"])
@@ -630,14 +734,15 @@ def quiz():
         return redirect(url_for("thank_you"))
     
     if session["already_saved"] and session["q_index"] > 0:
-        debug_log("Already submitted -> thankyou")
+        debug_log(f"cv_id={session['cv_id']} already submitted - redirecting to thank-you page")
         return redirect(url_for("thank_you"))
     
     questions = session["questions"]
     index = session["q_index"]
     
     if index >= len(questions):
-        debug_log("All questions done")
+        info_log(f"All {len(questions)} questions answered for cv_id={session['cv_id']} "
+                 f"(already saved: {session['already_saved']})")
         if not session["already_saved"]:
             save_answers_only(session["responses"], session["cv_id"])
             score_and_update(session["cv_id"])
@@ -648,7 +753,8 @@ def quiz():
             log_event(conn, session["cv_id"], "response_submit")
             log_event(conn, session["cv_id"], "end_exam")
             conn.close()
-            
+            info_log(f"Interview completed: cv_id={session['cv_id']}")
+
         return redirect(url_for("thank_you"))
     
     current_q = questions[index]
@@ -663,7 +769,9 @@ def quiz():
             "answered_at": current_timestamp
         })
         session["q_index"] += 1
-        
+        debug_log(f"Answer received for cv_id={session['cv_id']}: question {session['q_index']}/{len(questions)} "
+                  f"(ques_id={current_q['id']}, {len(user_answer)} chars)")
+
         if session["q_index"] >= len(questions):
             if not session["already_saved"]:
                 save_answers_only(session["responses"], session["cv_id"])
@@ -688,6 +796,8 @@ def quiz():
                 conn.commit()
                 cursor.close()
                 conn.close()
+                info_log(f"Interview completed: cv_id={session['cv_id']}, all {len(questions)} questions answered "
+                         f"- session released")
             return jsonify({"finished": True})
         
         next_q = questions[session["q_index"]]
@@ -699,11 +809,13 @@ def quiz():
 @app.route("/force_submit", methods=["POST"])
 def force_submit():
     if not validate_active_session():
+        warning_log(f"Force submit with invalid session (cv_id={session.get('cv_id')})")
         return jsonify({"status": "invalid_session"}), 403
-    debug_log("Force submit triggered")
     cv_id = session.get("cv_id")
     if not cv_id:
         return jsonify({"status": "error"}), 400
+    info_log(f"Force submit for cv_id={cv_id}: {len(session.get('responses', []))} answers "
+             f"(already saved: {session.get('already_saved', False)})")
     if not session.get("already_saved", False):
         responses = session.get("responses", [])
         if responses:
@@ -715,6 +827,8 @@ def force_submit():
             log_event(conn, cv_id, "response_submit")
             log_event(conn, cv_id, "end_exam")   # 🔥 ADD THIS LINE
             conn.close()
+        else:
+            warning_log(f"Force submit for cv_id={cv_id} with no answers - nothing saved or scored")
         session["already_saved"] = True
         # 🔥 release session
         conn = get_connection()
@@ -728,16 +842,19 @@ def force_submit():
         conn.commit()
         cursor.close()
         conn.close()
+        info_log(f"Interview completed (force submit): cv_id={cv_id} - session released")
     return jsonify({"status": "submitted"})
 
 @app.route("/time_up", methods=["POST"])
 def time_up():
     if not validate_active_session():
+        warning_log(f"Time-up with invalid session (cv_id={session.get('cv_id')})")
         return jsonify({"status": "invalid_session"}), 403
-    debug_log("Time up notification received")
     cv_id = session.get("cv_id")
     if not cv_id:
         return jsonify({"status": "error"}), 400
+    info_log(f"Time up for cv_id={cv_id}: {len(session.get('responses', []))} answers "
+             f"(already saved: {session.get('already_saved', False)})")
     if not session.get("already_saved", False):
         save_answers_only(session["responses"], cv_id)
         score_and_update(cv_id)
@@ -761,16 +878,19 @@ def time_up():
         conn.commit()
         cursor.close()
         conn.close()
+        info_log(f"Interview completed (time up): cv_id={cv_id} - session released")
     return jsonify({"status": "time_up"})
 
 @app.route("/terminate_exam", methods=["POST"])
 def terminate_exam():
     if not validate_active_session():
+        warning_log(f"Terminate request with invalid session (cv_id={session.get('cv_id')})")
         return jsonify({"status": "invalid_session"}), 403
-    debug_log("Exam termination request received")
     cv_id = session.get("cv_id")
     if not cv_id:
         return jsonify({"status": "error"}), 400
+    warning_log(f"Exam termination requested for cv_id={cv_id} (violations in session: "
+                f"{session.get('violation_count', 0)}, already saved: {session.get('already_saved', False)})")
     if not session.get("already_saved", False):
         save_answers_only(session["responses"], cv_id)
         conn = get_connection()
@@ -795,11 +915,11 @@ def terminate_exam():
         conn.commit()
         cursor.close()
         conn.close()
+        warning_log(f"Interview terminated: cv_id={cv_id}, FINAL_STATUS=VIOLATED - session released")
     return jsonify({"status": "terminated"})
 
 @app.route("/thankyou")
 def thank_you():
-    debug_log("Thank you page accessed")
     return render_template("thankyou.html")
 
 # ===============================
@@ -807,12 +927,11 @@ def thank_you():
 # ===============================
 @app.route("/upload_aadhar", methods=["POST"])
 def upload_aadhar():
-    debug_log("Aadhar upload initiated")
     data = request.get_json()
     image_data = data.get("image")
     cv_id = session.get("cv_id")
     if not image_data:
-        debug_log("No image data provided")
+        warning_log(f"Aadhar upload without image data (cv_id={cv_id})")
         return jsonify({"status": "error"}), 400
     try:
         image_data = image_data.split(",")[1]
@@ -821,20 +940,22 @@ def upload_aadhar():
         os.makedirs("uploads", exist_ok=True)
         with open(os.path.join("uploads", filename), "wb") as f:
             f.write(image_bytes)
+        info_log(f"Aadhar image saved for cv_id={cv_id}: {filename} ({len(image_bytes)} bytes)")
         return jsonify({"status": "success"})
     except Exception as e:
-        debug_log(f"Error uploading aadhar: {str(e)}")
+        error_log(f"Aadhar upload failed for cv_id={cv_id}: {e}")
         return jsonify({"status": "error"}), 400
 
 @app.route("/capture_photo", methods=["POST"])
 def capture_photo():
     if not validate_active_session():
+        warning_log(f"Photo capture with invalid session (cv_id={session.get('cv_id')})")
         return jsonify({"status": "invalid_session"}), 403
-    debug_log("Photo capture endpoint hit")
     data = request.get_json()
     image_data = data.get("image")
     cv_id = session.get("cv_id")
     if not image_data or not cv_id:
+        warning_log(f"Photo capture missing data: cv_id={cv_id}, image provided: {bool(image_data)}")
         return jsonify({"status": "error"}), 400
     try:
         image_data = image_data.split(",")[1]
@@ -847,19 +968,21 @@ def capture_photo():
         cursor.close()
         conn.close()
         session["photo_verified"] = True
+        info_log(f"Face photo captured for cv_id={cv_id} ({len(image_bytes)} bytes)")
         return jsonify({"status": "success"})
     except Exception as e:
-        debug_log(f"Photo save error: {str(e)}")
+        error_log(f"Saving face photo failed for cv_id={cv_id}: {e}")
         return jsonify({"status": "error"}), 500
 
 @app.route("/start_interview")
 def start_interview():
     if not validate_active_session():
+        warning_log(f"Start-interview page with invalid session (cv_id={session.get('cv_id')}) - redirecting home")
         session.clear()
         return redirect(url_for("home"))
-    debug_log("Start interview route accessed")
     if "cv_id" not in session:
         return redirect(url_for("home"))
+    debug_log(f"Start-interview page shown for cv_id={session['cv_id']}")
     session["photo_verified"] = True
     return render_template("start_interview.html")
 
@@ -868,7 +991,6 @@ def start_interview():
 # ===============================
 @app.route("/review")
 def review():
-    debug_log("Review route accessed")
     cv_id = session.get("cv_id")
     if not cv_id:
         return redirect(url_for("home"))
@@ -887,9 +1009,10 @@ def review():
         )
         data = cursor.fetchall()
         responses = [{"question": question, "answer": answer} for question, answer in data]
+        debug_log(f"Review page for cv_id={cv_id}: {len(responses)} responses")
         return render_template("review.html", responses=responses)
     except Exception as e:
-        debug_log(f"Review error: {str(e)}")
+        error_log(f"Loading review page failed for cv_id={cv_id}: {e}")
         return redirect(url_for("thank_you"))
     finally:
         cursor.close()
@@ -910,6 +1033,7 @@ def logout():
         conn.commit()
         cursor.close()
         conn.close()
+        info_log(f"Candidate logged out: cv_id={session['cv_id']}")
 
     session.clear()
     return redirect(url_for("home"))
@@ -931,10 +1055,13 @@ def get_exam_time_from_job(cv_id):
     conn.close()
 
     if row and row[0]:
+        debug_log(f"Exam duration for cv_id={cv_id}: {int(row[0])} min")
         return int(row[0])
 
+    warning_log(f"No INTERVIEW_TIME for cv_id={cv_id}'s job - using default 30 min")
     return 30
 
 if __name__ == "__main__":
-    debug_log("Starting Flask application on 0.0.0.0:8001")
-    app.run(host="0.0.0.0", port=8000, ssl_context='adhoc', debug=True)
+    info_log(f"Starting candidate assessment app on https://0.0.0.0:{CANDIDATE_APP_PORT} (ssl=adhoc, debug=True)")
+    log_app_urls("Candidate assessment app", CANDIDATE_APP_PORT, ssl=True, debug=True)
+    app.run(host="0.0.0.0", port=CANDIDATE_APP_PORT, ssl_context='adhoc', debug=True)

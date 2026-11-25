@@ -210,3 +210,7 @@ __marimo__/
 config.py
 token.json
 credentials.json
+# Application logs (utils/logger.py)
+logs/
+# Camera frames saved as evidence when the exam proctoring flags a violation (personal data)
+violation_snapshots/
